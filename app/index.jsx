@@ -1,5 +1,5 @@
 import { ScrollView, Text, View } from "react-native";
-import React from "react";
+import React, { useEffect } from "react";
 import CustomButton from "../components/CustomButton";
 import { SafeAreaView } from "react-native-safe-area-context";
 import FormField from "../components/FormField";
@@ -44,8 +44,8 @@ export default function App() {
           </Text>
 
           <CustomButton
-            title="Go to Auth Screen"
-            handlePress={() => router.push("/log-in")}
+            title="Go to Screen"
+            handlePress={() => router.push("/home")}
             containerStyles="w-full mt-10"
           />
         </View>

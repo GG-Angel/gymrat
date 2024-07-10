@@ -1,5 +1,5 @@
 import { View, Text, ScrollView, KeyboardAvoidingView, Platform } from "react-native";
-import React from "react";
+import React, { useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import FormField from "../../components/FormField";
 
@@ -8,6 +8,13 @@ import CustomButton from "../../components/CustomButton";
 import { Link, router } from "expo-router";
 
 const LogIn = () => {
+  const [form, setForm] = useState({
+    email: "",
+    password: ""
+  })
+
+  console.log(form);
+
   const handleSubmit = () => {
     router.replace("/home");
   };
@@ -30,11 +37,20 @@ const LogIn = () => {
               </View>
             </View>
             <View className="w-full my-6">
-              <FormField title="Email" placeholder="Enter email" />
+              <FormField 
+                title="Email" 
+                placeholder="Enter email" 
+                value={form.email}
+                handleChangeText={(e) => setForm({ ...form, email: e })}
+                autoComplete="email"
+              />
               <FormField
                 title="Password"
                 placeholder="Enter password"
+                value={form.password}
+                handleChangeText={(p) => setForm({ ...form, password: p })}
                 containerStyles="mt-4"
+                autoComplete="current-password"
               />
             </View>
             <CustomButton

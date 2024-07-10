@@ -14,6 +14,15 @@ module.exports = {
         white: {
           DEFAULT: "#FFFFFF", // absolute
           100: "#F5F5F7"      // 90%
+        },
+        yellow: {
+          DEFAULT: "#EEBD3F"
+        },
+        purple: {
+          DEFAULT: "#B873D8"
+        },
+        red: {
+          DEFAULT: "#F95976"
         }
       },
       fontSize: {

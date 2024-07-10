@@ -16,6 +16,13 @@ import tabHome from "../assets/icons/tabHome.svg";
 import tabStats from "../assets/icons/tabStats.svg";
 import tabGoals from "../assets/icons/tabGoals.svg";
 import tabProfile from "../assets/icons/tabProfile.svg";
+import empty from "../assets/icons/empty.svg";
+import edit from "../assets/icons/edit.svg";
+import checkmark from "../assets/icons/checkmark.svg";
+import close from "../assets/icons/close.svg";
+import expand from "../assets/icons/expand.svg";
+import collapse from "../assets/icons/collapse.svg";
+import trash from "../assets/icons/trash.svg";
 
 export default {
   calculator,
@@ -36,4 +43,11 @@ export default {
   tabStats,
   tabGoals,
   tabProfile,
-}
+  empty,
+  edit,
+  checkmark,
+  close,
+  expand,
+  collapse,
+  trash,
+};
