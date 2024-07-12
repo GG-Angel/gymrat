@@ -12,6 +12,5 @@
     "**/*.ts",
     "**/*.tsx",
     ".expo/types/**/*.ts",
-    "expo-env.d.ts"
-, "documents/deprecated/realm.js"  ]
+    "expo-env.d.ts",  ]
 }

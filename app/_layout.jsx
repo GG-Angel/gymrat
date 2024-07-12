@@ -1,3 +1,4 @@
+import { SQLiteProvider, useSQLiteContext } from "expo-sqlite";
 import { StyleSheet, Text, View } from "react-native";
 import React, { useEffect } from "react";
 import { useFonts } from "expo-font";
@@ -35,16 +36,26 @@ const RootLayout = () => {
   }
 
   return (
-    <>
+    <SQLiteProvider
+      databaseName="gymrat-data.db"
+      onInit={() => console.log("Database started!")}
+    >
       <Stack>
         <Stack.Screen name="index" options={{ headerShown: false }} />
+        <Stack.Screen name="test" options={{ headerShown: false }} />
         <Stack.Screen name="(auth)" options={{ headerShown: false }} />
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="editor/editworkout" options={{ headerShown: false }} />
-        <Stack.Screen name="editor/newworkout" options={{ headerShown: false }} />
+        <Stack.Screen
+          name="editor/editworkout"
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="editor/newworkout"
+          options={{ headerShown: false }}
+        />
       </Stack>
       <StatusBar style="dark" />
-    </>
+    </SQLiteProvider>
   );
 };
 
