@@ -7,9 +7,9 @@ import {
   KeyboardAvoidingView,
 } from "react-native";
 import React, { useEffect, useRef, useState } from "react";
-import CardContainer from "./CardContainer";
+import CardContainer from "../components/CardContainer";
 import { icons } from "../constants";
-import CustomButton from "./CustomButton";
+import CustomButton from "../components/CustomButton";
 import uuid from "react-native-uuid";
 
 const setTypes = ["Standard", "Warm-up", "Drop", "Failure"];
@@ -138,7 +138,6 @@ const ExerciseEditorCard = ({ exercise, handleEdits, handleDelete }) => {
       };
     });
   };
-  
 
   useEffect(() => {
     console.log("Exercise Updated\n", JSON.stringify(exerciseDetails, null, 2));
@@ -174,7 +173,7 @@ const ExerciseEditorCard = ({ exercise, handleEdits, handleDelete }) => {
           <FlatList
             data={exercise.sets}
             keyExtractor={(item) => item._id}
-            renderItem={({ item, index }) => (
+            renderItem={({ setId: item, index }) => (
               <SetEditor
                 index={index}
                 set={item}

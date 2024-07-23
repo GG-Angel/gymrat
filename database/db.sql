@@ -27,39 +27,3 @@ CREATE TABLE
     reps INTEGER,
     FOREIGN KEY (exercise_id) REFERENCES Exercises (id) ON DELETE CASCADE
   );
-
-INSERT INTO
-  Workout (id, name, days, tags)
-VALUES
-  (
-    123,
-    'Push Day',
-    'Monday, Wednesday',
-    'Chest, Shoulders, Triceps'
-  );
-
-INSERT INTO
-  Exercise (id, workout_id, name, rest, notes)
-VALUES
-  (
-    456,
-    123,
-    'Chest Press Machine',
-    90,
-    'Seat position: 8'
-  );
-
-INSERT INTO
-  ExerciseSet (id, exercise_id, type, weight, reps)
-VALUES
-  (1, 456, 'Warm-up', 140, 10);
-
-INSERT INTO
-  ExerciseSet (id, exercise_id, type, weight, reps)
-VALUES
-  (2, 456, 'Standard', 180, 8);
-
-INSERT INTO
-  ExerciseSet (id, exercise_id, type, weight, reps)
-VALUES
-  (3, 456, 'Failure', 90, 15);

@@ -4,6 +4,7 @@ import React, { useEffect } from "react";
 import { useFonts } from "expo-font";
 import { SplashScreen, Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
+import { setupDatabase } from "../database/database";
 
 // displays a splash screen until fonts are loaded
 SplashScreen.preventAutoHideAsync();
@@ -38,11 +39,10 @@ const RootLayout = () => {
   return (
     <SQLiteProvider
       databaseName="gymrat-data.db"
-      onInit={() => console.log("Database started!")}
+      onInit={setupDatabase}
     >
       <Stack>
         <Stack.Screen name="index" options={{ headerShown: false }} />
-        <Stack.Screen name="test" options={{ headerShown: false }} />
         <Stack.Screen name="(auth)" options={{ headerShown: false }} />
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen

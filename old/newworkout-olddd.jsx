@@ -1,11 +1,4 @@
-import {
-  View,
-  Text,
-  FlatList,
-  TouchableOpacity,
-  KeyboardAvoidingView,
-  Platform,
-} from "react-native";
+import { View, Text, TouchableOpacity } from "react-native";
 import React, { useEffect, useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Divider from "../../components/Divider";
@@ -14,7 +7,7 @@ import { icons } from "../../constants";
 import ExerciseBrowser from "../../components/ExerciseBrowser";
 import ExerciseEditorCard from "../../components/ExerciseEditorCard";
 import uuid from "react-native-uuid";
-import { KeyboardAwareFlatList, KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
+import { KeyboardAwareFlatList } from "react-native-keyboard-aware-scroll-view";
 
 const daysOfWeek = [
   "Sunday",
@@ -45,7 +38,7 @@ const DateToggle = ({ day, isSelected, handlePress }) => {
   );
 };
 
-const NewWorkoutModal = () => {
+const NewWorkout = () => {
   const [workoutDetails, setWorkoutDetails] = useState({
     workoutName: "Push Day",
     selectedDays: ["Monday", "Thursday"],
@@ -166,7 +159,7 @@ const NewWorkoutModal = () => {
         <KeyboardAwareFlatList
           data={workoutDetails.exercises}
           keyExtractor={(item) => item._id}
-          renderItem={({ item: exercise }) => (
+          renderItem={({ setId: exercise }) => (
             <ExerciseEditorCard
               exercise={exercise}
               handleEdits={handleEditExercise}
@@ -198,7 +191,7 @@ const NewWorkoutModal = () => {
               <KeyboardAwareFlatList
                 data={daysOfWeek}
                 keyExtractor={(item) => item}
-                renderItem={({ item: day }) => (
+                renderItem={({ setId: day }) => (
                   <DateToggle
                     day={day.charAt(0)}
                     isSelected={workoutDetails.selectedDays.includes(day)}

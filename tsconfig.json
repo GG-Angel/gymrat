@@ -12,5 +12,5 @@
     "**/*.ts",
     "**/*.tsx",
     ".expo/types/**/*.ts",
-    "expo-env.d.ts",  ]
+    "expo-env.d.ts", "utils/format.ts", "constants/icons.js", "app/(tabs)/_layout.jsx", "app/_layout.jsx", "app/(auth)/_layout.jsx", "components/DateSelecter.jsx", "app/editor/newworkout.jsx",  ]
 }

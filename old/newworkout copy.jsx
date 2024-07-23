@@ -19,45 +19,56 @@ import Divider from "../../components/Divider";
 import FormField from "../../components/FormField";
 import { icons } from "../../constants";
 import ExerciseBrowser from "../../components/ExerciseBrowser";
+import ExerciseEditorCard from "../../components/ExerciseEditorCard";
 import { KeyboardAwareFlatList } from "react-native-keyboard-aware-scroll-view";
 import uuid from "react-native-uuid";
 import CardContainer from "@/components/CardContainer";
 import CustomButton from "@/components/CustomButton";
 
-// const initialState = {
-//   workout: {
-//     _id: uuid.v4(),
-//     name: "Push Day (PPL)",
-//     days: ["Monday", "Thursday"],
-//     exerciseIds: [0],
-//   },
-//   exercises: {
-//     0: {
-//       _id: 0,
-//       name: "Chest Press Machine",
-//       rest: 90,
-//       notes: "Example notes",
-//       setIds: [1, 2, 3, 4, 5],
-//     },
-//   },
-//   sets: {
-//     1: { _id: 1, type: "Warm-up", weight: 140, reps: 10 },
-//     2: { _id: 2, type: "Standard", weight: 160, reps: 5 },
-//     3: { _id: 3, type: "Standard", weight: 160, reps: 4 },
-//     4: { _id: 4, type: "Failure", weight: 90, reps: 17 },
-//     5: { _id: 5, type: "Standard", weight: 160, reps: 7 },
-//   },
-// };
-
 const initialState = {
-  workout: {
-    _id: uuid.v4(),
-    name: "",
-    days: [],
-    exerciseIds: [],
-  },
-  exercises: {},
-  sets: {},
+  _id: uuid.v4(),
+  name: "Push Day",
+  days: ["Monday", "Thursday"],
+  exercises: [
+    {
+      _id: uuid.v4(),
+      name: "Chest Press Machine",
+      rest: 90,
+      notes: "Example notes",
+      sets: [
+        {
+          _id: uuid.v4(),
+          type: "Warm-up",
+          weight: 140,
+          reps: 10,
+        },
+        {
+          _id: uuid.v4(),
+          type: "Standard",
+          weight: 160,
+          reps: 7,
+        },
+        {
+          _id: uuid.v4(),
+          type: "Standard",
+          weight: 160,
+          reps: 5,
+        },
+        {
+          _id: uuid.v4(),
+          type: "Standard",
+          weight: 160,
+          reps: 4,
+        },
+        {
+          _id: uuid.v4(),
+          type: "Failure",
+          weight: 90,
+          reps: 17,
+        },
+      ],
+    },
+  ],
 };
 
 const WorkoutContext = createContext();
@@ -67,118 +78,45 @@ function workoutReducer(state, action) {
     case "CHANGE_NAME":
       return {
         ...state,
-        workout: {
-          ...state.workout,
-          name: action.name,
-        },
+        name: action.name,
       };
     case "TOGGLE_DAY":
       return {
         ...state,
-        workout: {
-          ...state.workout,
-          days: state.workout.days.includes(action.day)
-            ? state.workout.days.filter((d) => d !== action.day)
-            : [...state.workout.days, action.day],
-        },
+        days: state.days.includes(action.day)
+          ? state.days.filter((d) => d !== action.day)
+          : [...state.days, action.day],
       };
     case "ADD_EXERCISE":
-      const newExerciseId = uuid.v4();
-      const setIds = [uuid.v4(), uuid.v4(), uuid.v4()];
-      const newSets = {};
-
-      setIds.forEach((id) => {
-        newSets[id] = { _id: id, type: "Standard", weight: null, reps: null };
-      });
-
       return {
         ...state,
-        workout: {
-          ...state.workout,
-          exerciseIds: [...state.workout.exerciseIds, newExerciseId],
-        },
-        exercises: {
+        exercises: [
           ...state.exercises,
-          [newExerciseId]: {
-            _id: newExerciseId,
+          {
+            _id: uuid.v4(),
             name: action.name,
             rest: 90,
             notes: "",
-            setIds: setIds,
+            sets: Array.from({ length: 3 }, () => ({
+              _id: uuid.v4(),
+              type: "Standard",
+              weight: null,
+              reps: null,
+            })),
           },
-        },
-        sets: {
-          ...state.sets,
-          ...newSets,
-        },
+        ],
       };
     case "EDIT_EXERCISE":
       return {
         ...state,
-        exercises: {
-          ...state.exercises,
-          [action.exercise._id]: action.exercise,
-        },
+        exercises: state.exercises.map((e) =>
+          e._id === action.exercise._id ? action.exercise : e
+        ),
       };
     case "DELETE_EXERCISE":
-      const {
-        [action.removeExerciseId]: deletedExercise,
-        ...remainingExercises
-      } = state.exercises;
-
-      // delete sets from state
-      const remainingSets = { ...state.sets };
-      deletedExercise.setIds.forEach((setId) => {
-        delete remainingSets[setId];
-      });
-
       return {
         ...state,
-        workout: {
-          ...state.workout,
-          exerciseIds: state.workout.exerciseIds.filter(
-            (id) => id !== action.removeExerciseId
-          ),
-        },
-        exercises: remainingExercises,
-        sets: remainingSets,
-      };
-    case "ADD_SET":
-      return {
-        ...state,
-        exercises: {
-          ...state.exercises,
-          [action.exercise._id]: action.exercise,
-        },
-        sets: {
-          ...state.sets,
-          [action.newSetId]: {
-            _id: action.newSetId,
-            type: "Standard",
-            weight: null,
-            reps: null,
-          },
-        },
-      };
-    case "EDIT_SET":
-      return {
-        ...state,
-        sets: {
-          ...state.sets,
-          [action.updatedSet._id]: action.updatedSet,
-        },
-      };
-    case "REMOVE_SET":
-      const alteredSets = { ...state.sets };
-      delete alteredSets[action.removeSetId];
-
-      return {
-        ...state,
-        exercises: {
-          ...state.exercises,
-          [action.exercise._id]: action.exercise,
-        },
-        sets: alteredSets,
+        exercises: state.exercises.filter((e) => e._id !== action._id),
       };
     default:
       return state;
@@ -186,13 +124,16 @@ function workoutReducer(state, action) {
 }
 
 const WorkoutProvider = ({ children }) => {
-  const [form, dispatch] = useReducer(workoutReducer, initialState);
+  const [workout, dispatch] = useReducer(workoutReducer, initialState);
 
-  const contextValue = useMemo(() => ({ form, dispatch }), [form, dispatch]);
+  const contextValue = useMemo(
+    () => ({ workout, dispatch }),
+    [workout, dispatch]
+  );
 
-  // useEffect(() => {
-  //   console.log(JSON.stringify(form, null, 2));
-  // }, [form]);
+  useEffect(() => {
+    console.log(JSON.stringify(workout, null, 2));
+  }, [workout]);
 
   return (
     <WorkoutContext.Provider value={contextValue}>
@@ -221,7 +162,7 @@ const DayToggle = ({ day, isSelected, handleToggle }) => {
 };
 
 const DaySelecter = () => {
-  const { form, dispatch } = useContext(WorkoutContext);
+  const { workout, dispatch } = useContext(WorkoutContext);
   const daysOfWeek = useRef([
     "Sunday",
     "Monday",
@@ -235,12 +176,12 @@ const DaySelecter = () => {
   return (
     <FlatList
       data={daysOfWeek.current}
-      keyExtractor={(day) => day}
-      renderItem={({ item: day }) => (
+      keyExtractor={(item) => item}
+      renderItem={({ setId: item }) => (
         <DayToggle
-          day={day}
-          isSelected={form.workout.days.includes(day)}
-          handleToggle={() => dispatch({ type: "TOGGLE_DAY", day })}
+          day={item}
+          isSelected={workout.days.includes(item)}
+          handleToggle={() => dispatch({ type: "TOGGLE_DAY", day: item })}
         />
       )}
       horizontal
@@ -278,7 +219,7 @@ const SetTypeEditor = ({ index, type, handlePress }) => {
       onPress={handlePress}
     >
       <Text className={`text-cbody text-center ${styles.current[type].text}`}>
-        {type === "Standard" ? index + 1 : type.charAt(0)}
+        {type === "Standard" ? index : type.charAt(0)}
       </Text>
     </TouchableOpacity>
   );
@@ -346,45 +287,49 @@ const SetEditor = ({ index, set, handleEditSet }) => {
 };
 
 const EditorCard = ({ exercise }) => {
-  const { form, dispatch } = useContext(WorkoutContext);
+  const { dispatch } = useContext(WorkoutContext);
   const [isExpanded, setIsExpanded] = useState(false);
 
   const handleAddSet = () => {
-    const newSetId = uuid.v4();
     dispatch({
-      type: "ADD_SET",
-      newSetId: newSetId,
+      type: "EDIT_EXERCISE",
       exercise: {
         ...exercise,
-        setIds: [...exercise.setIds, newSetId],
+        sets: [
+          ...exercise.sets,
+          {
+            _id: uuid.v4(),
+            type: "Standard",
+            weight: null,
+            reps: null,
+          },
+        ],
       },
     });
   };
 
   const handleEditSet = (updatedSet) => {
     dispatch({
-      type: "EDIT_SET",
-      updatedSet: updatedSet,
-    });
-  };
-
-  const handleRemoveSet = () => {
-    const removeSetId = exercise.setIds[exercise.setIds.length - 1];
-    dispatch({
-      type: "REMOVE_SET",
-      removeSetId: removeSetId,
+      type: "EDIT_EXERCISE",
       exercise: {
         ...exercise,
-        setIds: exercise.setIds.slice(0, -1),
+        sets: exercise.sets.map((s) =>
+          s._id === updatedSet._id ? updatedSet : s
+        ),
       },
     });
   };
 
-  const handleDeleteExercise = () => {
-    dispatch({
-      type: "DELETE_EXERCISE",
-      removeExerciseId: exercise._id,
-    });
+  const handleRemoveSet = () => {
+    if (exercise.sets.length > 1) {
+      dispatch({
+        type: "EDIT_EXERCISE",
+        exercise: {
+          ...exercise,
+          sets: exercise.sets.slice(0, -1),
+        },
+      });
+    }
   };
 
   return (
@@ -398,7 +343,7 @@ const EditorCard = ({ exercise }) => {
               {exercise.name}
             </Text>
             <Text className="text-gray font-gregular text-ctri">
-              {`${exercise.setIds.length} Sets`}
+              {`${exercise.sets.length} Sets`}
             </Text>
           </View>
           <TouchableOpacity
@@ -412,12 +357,12 @@ const EditorCard = ({ exercise }) => {
       {isExpanded && (
         <CardContainer containerStyles="rounded-t-none">
           <FlatList
-            data={exercise.setIds}
-            keyExtractor={(setId) => setId}
-            renderItem={({ item: setId, index }) => (
+            data={exercise.sets}
+            keyExtractor={(item) => item._id}
+            renderItem={({ setId: item, index }) => (
               <SetEditor
                 index={index}
-                set={form.sets[setId]}
+                set={item}
                 handleEditSet={handleEditSet}
               />
             )}
@@ -439,25 +384,18 @@ const EditorCard = ({ exercise }) => {
               <View className="mt-4">
                 <View className="flex flex-row justify-between items-center">
                   <TouchableOpacity
-                    className={`w-[38px] h-[38px] flex justify-center items-center ${form.workout.exerciseIds.length <= 1 && "opacity-25"}`}
-                    onPress={handleDeleteExercise}
-                    disabled={form.workout.exerciseIds.length <= 1}
+                    className="w-[38px] h-[38px] flex justify-center items-center"
+                    onPress={() => {}}
                   >
                     <icons.trash />
                   </TouchableOpacity>
                   <View className="flex-row">
                     <CustomButton
                       title="Remove Set"
-                      style="secondary"
                       handlePress={handleRemoveSet}
-                      containerStyles="mr-2"
-                      disabled={exercise.setIds.length <= 1}
+                      containerStyles="bg-secondary mr-2"
                     />
-                    <CustomButton
-                      title="Add Set"
-                      handlePress={handleAddSet}
-                      disabled={exercise.setIds.length >= 15}
-                    />
+                    <CustomButton title="Add Set" handlePress={handleAddSet} />
                   </View>
                 </View>
               </View>
@@ -470,19 +408,17 @@ const EditorCard = ({ exercise }) => {
 };
 
 const Editor = () => {
-  const { form, dispatch } = useContext(WorkoutContext);
+  const { workout, dispatch } = useContext(WorkoutContext);
 
   return (
     <KeyboardAwareFlatList
-      data={form.workout.exerciseIds}
-      keyExtractor={(exerciseId) => exerciseId}
-      renderItem={({ item: exerciseId }) => (
-        <EditorCard exercise={form.exercises[exerciseId]} />
-      )}
+      data={workout.exercises}
+      keyExtractor={(item) => item._id}
+      renderItem={({ setId: item }) => <EditorCard exercise={item} />}
       contentContainerStyle={{ paddingHorizontal: 32, paddingBottom: 96 }}
       ItemSeparatorComponent={() => <View className="h-4"></View>}
       ListHeaderComponent={() => (
-        <View className="w-full">
+        <View className="flex-1">
           <Text className="text-secondary font-gbold text-ch1 mt-2">
             New Workout
           </Text>
@@ -494,7 +430,7 @@ const Editor = () => {
             Icon={icons.edit}
             iconSize={15}
             iconInsideField
-            value={form.workout.name}
+            value={workout.name}
             handleChangeText={(name) => dispatch({ type: "CHANGE_NAME", name })}
             placeholder="Enter workout name"
             containerStyles="mt-2 mb-3"
@@ -514,7 +450,7 @@ const Editor = () => {
   );
 };
 
-const NewWorkout = () => {
+const NewWorkoutCopy = () => {
   return (
     <WorkoutProvider>
       <SafeAreaView
@@ -541,4 +477,4 @@ const NewWorkout = () => {
   );
 };
 
-export default NewWorkout;
+export default NewWorkoutCopy;

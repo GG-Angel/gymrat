@@ -4,9 +4,10 @@ import {
   TextInput,
   FlatList,
   TouchableOpacity,
+  ScrollView,
+  Keyboard,
 } from "react-native";
 import React, { useEffect, useState } from "react";
-import Search from "../assets/icons/search.svg";
 import { icons } from "../constants";
 
 const exercises = [
@@ -34,10 +35,14 @@ const ExerciseBrowser = ({ handleSubmit, containerStyles }) => {
     handleSubmit(selectedExercise);
     setSearchQuery("");
     setFocused(false);
-  }
+    Keyboard.dismiss;
+  };
 
   return (
-    <View className={`${containerStyles}`}>
+    <ScrollView
+      className={`${containerStyles}`}
+      keyboardShouldPersistTaps="always"
+    >
       <View
         className={`flex-row w-full py-3 px-4 mb-0 space-x-3 items-center bg-white ${
           searchQuery || focused
@@ -68,6 +73,7 @@ const ExerciseBrowser = ({ handleSubmit, containerStyles }) => {
                 index === 4 && "rounded-b-lg"
               }`}
               onPress={() => processSelection(exercise)}
+              key={index}
             >
               <icons.dumbbell width={14} height={14} />
               <Text className="flex-1 text-gray font-gregular text-body">
@@ -90,7 +96,7 @@ const ExerciseBrowser = ({ handleSubmit, containerStyles }) => {
           )}
         />
       )}
-    </View>
+    </ScrollView>
   );
 };
 
