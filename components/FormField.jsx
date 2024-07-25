@@ -23,7 +23,7 @@ const FormField = ({
     <View className={`${title && "gap-y-2"} ${containerStyles}`}>
       { title && (
         <View className="flex-row items-center gap-x-2">
-          {(Icon && !iconInsideField) && ( // render icon if provided
+          {(Icon && !iconInsideField) && (
             <View className="w-[15px] h-[15px] flex items-center justify-center">
               <Icon width={iconSize} height={iconSize} />
             </View>
@@ -47,6 +47,7 @@ const FormField = ({
           onBlur={() => handleChangeText(localValue)}
           secureTextEntry={title === "Password" && !showPassword}
           autoComplete={autoComplete | "off"}
+          hitSlop={{ top: 16, bottom: 16, left: iconInsideField ? 48 : 24, right: 24 }}
         />
         {title === "Password" && (
           <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>

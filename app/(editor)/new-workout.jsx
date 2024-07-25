@@ -2,13 +2,12 @@ import {
   View,
   Text,
   TouchableOpacity,
-  FlatList,
   TextInput,
+  Alert,
 } from "react-native";
 import React, {
   createContext,
   useContext,
-  useEffect,
   useMemo,
   useReducer,
   useRef,
@@ -19,46 +18,14 @@ import Divider from "../../components/Divider";
 import FormField from "../../components/FormField";
 import { icons } from "../../constants";
 import ExerciseBrowser from "../../components/ExerciseBrowser";
-import { KeyboardAwareFlatList } from "react-native-keyboard-aware-scroll-view";
-import uuid from "react-native-uuid";
+import {
+  KeyboardAwareFlatList,
+} from "react-native-keyboard-aware-scroll-view";
 import CardContainer from "@/components/CardContainer";
 import CustomButton from "@/components/CustomButton";
-
-// const initialState = {
-//   workout: {
-//     _id: uuid.v4(),
-//     name: "Push Day (PPL)",
-//     days: ["Monday", "Thursday"],
-//     exerciseIds: [0],
-//   },
-//   exercises: {
-//     0: {
-//       _id: 0,
-//       name: "Chest Press Machine",
-//       rest: 90,
-//       notes: "Example notes",
-//       setIds: [1, 2, 3, 4, 5],
-//     },
-//   },
-//   sets: {
-//     1: { _id: 1, type: "Warm-up", weight: 140, reps: 10 },
-//     2: { _id: 2, type: "Standard", weight: 160, reps: 5 },
-//     3: { _id: 3, type: "Standard", weight: 160, reps: 4 },
-//     4: { _id: 4, type: "Failure", weight: 90, reps: 17 },
-//     5: { _id: 5, type: "Standard", weight: 160, reps: 7 },
-//   },
-// };
-
-const initialState = {
-  workout: {
-    _id: uuid.v4(),
-    name: "",
-    days: [],
-    exerciseIds: [],
-  },
-  exercises: {},
-  sets: {},
-};
+import { router } from "expo-router";
+import { generateUUID, saveNewWorkout } from "@/database/database";
+import { useSQLiteContext } from "expo-sqlite";
 
 const WorkoutContext = createContext();
 
@@ -83,33 +50,49 @@ function workoutReducer(state, action) {
         },
       };
     case "ADD_EXERCISE":
-      const newExerciseId = uuid.v4();
-      const setIds = [uuid.v4(), uuid.v4(), uuid.v4()];
-      const newSets = {};
-
-      setIds.forEach((id) => {
-        newSets[id] = { _id: id, type: "Standard", weight: null, reps: null };
-      });
-
+      const setIds = [generateUUID(), generateUUID(), generateUUID()];
       return {
         ...state,
         workout: {
           ...state.workout,
-          exerciseIds: [...state.workout.exerciseIds, newExerciseId],
+          exerciseIds: [
+            ...state.workout.exerciseIds, 
+            action.exercise._id
+          ],
         },
         exercises: {
           ...state.exercises,
-          [newExerciseId]: {
-            _id: newExerciseId,
-            name: action.name,
-            rest: 90,
+          [action.exercise._id]: {
+            _id: action.exercise._id,
+            master_id: action.exercise.master_id, // will be null if exercise is custom
+            // an isLinked field could easily determine whether ot not to update other master exercise
+            name: action.exercise.name,
+            rest: "90",
             notes: "",
+            tags: action.exercise.tags,
             setIds: setIds,
           },
         },
         sets: {
           ...state.sets,
-          ...newSets,
+          [setIds[0]]: {
+            _id: setIds[0],
+            type: "Warm-up",
+            weight: null,
+            reps: null,
+          },
+          [setIds[1]]: {
+            _id: setIds[1],
+            type: "Standard",
+            weight: null,
+            reps: null,
+          },
+          [setIds[2]]: {
+            _id: setIds[2],
+            type: "Failure",
+            weight: null,
+            reps: null,
+          },
         },
       };
     case "EDIT_EXERCISE":
@@ -186,7 +169,19 @@ function workoutReducer(state, action) {
 }
 
 const WorkoutProvider = ({ children }) => {
-  const [form, dispatch] = useReducer(workoutReducer, initialState);
+  const [form, dispatch] = useReducer(
+    workoutReducer, 
+    {
+      workout: {
+        _id: generateUUID(),
+        name: "",
+        days: [],
+        exerciseIds: [],
+      },
+      exercises: {},
+      sets: {},
+    }
+  );
 
   const contextValue = useMemo(() => ({ form, dispatch }), [form, dispatch]);
 
@@ -233,7 +228,7 @@ const DaySelecter = () => {
   ]);
 
   return (
-    <FlatList
+    <KeyboardAwareFlatList
       data={daysOfWeek.current}
       keyExtractor={(day) => day}
       renderItem={({ item: day }) => (
@@ -321,11 +316,12 @@ const SetEditor = ({ index, set, handleEditSet }) => {
         <TextInput
           className="flex-1 text-gray font-gregular text-cbody text-center"
           keyboardType="numeric"
-          value={set.weight && String(set.weight)}
+          value={set.weight}
           placeholder={"N/A"}
           placeholderTextColor="#BABABA"
           onChangeText={(w) => handleEdits("weight", w)}
           maxLength={8}
+          hitSlop={{ top: 8, bottom: 8, left: 16, right: 16 }}
         />
       </View>
       <View
@@ -334,11 +330,12 @@ const SetEditor = ({ index, set, handleEditSet }) => {
         <TextInput
           className="flex-1 text-gray font-gregular text-cbody text-center"
           keyboardType="numeric"
-          value={set.reps && String(set.reps)}
+          value={set.reps}
           placeholder={"N/A"}
           placeholderTextColor="#BABABA"
           onChangeText={(r) => handleEdits("reps", r)}
           maxLength={5}
+          hitSlop={{ top: 8, bottom: 8, left: 16, right: 16 }}
         />
       </View>
     </View>
@@ -350,7 +347,7 @@ const EditorCard = ({ exercise }) => {
   const [isExpanded, setIsExpanded] = useState(false);
 
   const handleAddSet = () => {
-    const newSetId = uuid.v4();
+    const newSetId = generateUUID();
     dispatch({
       type: "ADD_SET",
       newSetId: newSetId,
@@ -380,6 +377,16 @@ const EditorCard = ({ exercise }) => {
     });
   };
 
+  const handleEditRest = (updatedRest) => {
+    dispatch({
+      type: "EDIT_EXERCISE",
+      exercise: {
+        ...exercise,
+        rest: updatedRest,
+      },
+    });
+  };
+
   const handleDeleteExercise = () => {
     dispatch({
       type: "DELETE_EXERCISE",
@@ -389,29 +396,31 @@ const EditorCard = ({ exercise }) => {
 
   return (
     <>
-      <CardContainer
-        containerStyles={`${isExpanded && "rounded-b-none border-b-[1px] border-gray-200"}`}
-      >
-        <View className="flex-row justify-between items-center space-x-6">
-          <View>
-            <Text className="text-secondary font-gbold text-csub mb-0.5">
-              {exercise.name}
-            </Text>
-            <Text className="text-gray font-gregular text-ctri">
-              {`${exercise.setIds.length} Sets`}
-            </Text>
+      <TouchableOpacity onPress={() => setIsExpanded(!isExpanded)}>
+        <CardContainer
+          containerStyles={`${isExpanded && "rounded-b-none border-b-[1px] border-gray-200"}`}
+        >
+          <View className="flex-row justify-between items-center space-x-6">
+            <View className="flex-1">
+              <Text className="text-secondary font-gbold text-csub">
+                {exercise.name}
+              </Text>
+              <Text className="text-gray font-gregular text-cbody">
+                {`${exercise.setIds.length} Sets`}
+              </Text>
+              {/* <Text className="text-gray font-gregular text-cbody mt-1">
+                {exercise.tags}
+              </Text> */}
+            </View>
+            <View className="w-[34px] h-[34px] flex justify-center items-center">
+              {isExpanded ? <icons.collapse /> : <icons.expand />}
+            </View>
           </View>
-          <TouchableOpacity
-            className="w-[34px] h-[34px] flex justify-center items-center"
-            onPress={() => setIsExpanded(!isExpanded)}
-          >
-            {isExpanded ? <icons.collapse /> : <icons.expand />}
-          </TouchableOpacity>
-        </View>
-      </CardContainer>
+        </CardContainer>
+      </TouchableOpacity>
       {isExpanded && (
         <CardContainer containerStyles="rounded-t-none">
-          <FlatList
+          <KeyboardAwareFlatList
             data={exercise.setIds}
             keyExtractor={(setId) => setId}
             renderItem={({ item: setId, index }) => (
@@ -435,34 +444,49 @@ const EditorCard = ({ exercise }) => {
                 </Text>
               </View>
             )}
-            ListFooterComponent={() => (
-              <View className="mt-4">
-                <View className="flex flex-row justify-between items-center">
-                  <TouchableOpacity
-                    className={`w-[38px] h-[38px] flex justify-center items-center ${form.workout.exerciseIds.length <= 1 && "opacity-25"}`}
-                    onPress={handleDeleteExercise}
-                    disabled={form.workout.exerciseIds.length <= 1}
-                  >
-                    <icons.trash />
-                  </TouchableOpacity>
-                  <View className="flex-row">
-                    <CustomButton
-                      title="Remove Set"
-                      style="secondary"
-                      handlePress={handleRemoveSet}
-                      containerStyles="mr-2"
-                      disabled={exercise.setIds.length <= 1}
-                    />
-                    <CustomButton
-                      title="Add Set"
-                      handlePress={handleAddSet}
-                      disabled={exercise.setIds.length >= 15}
-                    />
-                  </View>
-                </View>
-              </View>
-            )}
           />
+          <View className="flex-row justify-end items-center space-x-2 my-4">
+            <icons.rest />
+            <Text className="text-secondary font-gsemibold text-cbody">
+              Rest Time
+            </Text>
+            <View
+              className={`flex-[0.36] bg-white-100 py-1 rounded-md ${!exercise.rest && "opacity-50"}`}
+            >
+              <TextInput
+                className="flex-1 text-gray font-gregular text-cbody text-center"
+                keyboardType="numeric"
+                value={exercise.rest}
+                placeholder={"N/A"}
+                placeholderTextColor="#BABABA"
+                onChangeText={handleEditRest}
+                maxLength={4}
+                hitSlop={{ top: 8, bottom: 8, left: 16, right: 16 }}
+              />
+            </View>
+          </View>
+          <View className="flex flex-row justify-between items-center">
+            <TouchableOpacity
+              className="w-[38px] h-[38px] flex justify-center items-center"
+              onPress={handleDeleteExercise}
+            >
+              <icons.trash />
+            </TouchableOpacity>
+            <View className="flex-row">
+              <CustomButton
+                title="Remove Set"
+                style="secondary"
+                handlePress={handleRemoveSet}
+                containerStyles="mr-2"
+                disabled={exercise.setIds.length <= 1}
+              />
+              <CustomButton
+                title="Add Set"
+                handlePress={handleAddSet}
+                disabled={exercise.setIds.length >= 15}
+              />
+            </View>
+          </View>
         </CardContainer>
       )}
     </>
@@ -470,47 +494,90 @@ const EditorCard = ({ exercise }) => {
 };
 
 const Editor = () => {
+  const db = useSQLiteContext();
   const { form, dispatch } = useContext(WorkoutContext);
+  const [isSubmitting, setIsSubmitting] = useState(false);  
+
+  const handleSubmit = async () => {
+    setIsSubmitting(true);
+
+    if (form.workout.name.trim() === "") {
+      Alert.alert("Invalid Details", "Please enter a valid workout name")
+    } else if (form.workout.exerciseIds.length === 0) {
+      Alert.alert("Invalid Details", "You must have at least one exercise")
+    } else {
+      await saveNewWorkout(db, form);
+      Alert.alert("Workout Saved!")
+      router.back();
+    }
+
+    setIsSubmitting(false);
+  }
 
   return (
-    <KeyboardAwareFlatList
-      data={form.workout.exerciseIds}
-      keyExtractor={(exerciseId) => exerciseId}
-      renderItem={({ item: exerciseId }) => (
-        <EditorCard exercise={form.exercises[exerciseId]} />
-      )}
-      contentContainerStyle={{ paddingHorizontal: 32, paddingBottom: 96 }}
-      ItemSeparatorComponent={() => <View className="h-4"></View>}
-      ListHeaderComponent={() => (
-        <View className="w-full">
-          <Text className="text-secondary font-gbold text-ch1 mt-2">
-            New Workout
-          </Text>
-          <Divider />
-          <Text className="text-gray font-gregular text-csub">
-            Edit Details
-          </Text>
-          <FormField
-            Icon={icons.edit}
-            iconSize={15}
-            iconInsideField
-            value={form.workout.name}
-            handleChangeText={(name) => dispatch({ type: "CHANGE_NAME", name })}
-            placeholder="Enter workout name"
-            containerStyles="mt-2 mb-3"
-          />
-          <DaySelecter />
-          <Divider />
-          <Text className="text-gray font-gregular text-csub">
-            Modify Exercises
-          </Text>
-          <ExerciseBrowser
-            containerStyles="mt-2 mb-4"
-            handleSubmit={(name) => dispatch({ type: "ADD_EXERCISE", name })}
-          />
-        </View>
-      )}
-    />
+    <>
+      <KeyboardAwareFlatList
+        data={form.workout.exerciseIds}
+        keyExtractor={(exerciseId) => exerciseId}
+        renderItem={({ item: exerciseId }) => (
+          <EditorCard exercise={form.exercises[exerciseId]} />
+        )}
+        keyboardShouldPersistTaps="handled"
+        keyboardOpeningTime={400}
+        extraScrollHeight={64}
+        contentContainerStyle={{ paddingHorizontal: 32, paddingBottom: 80 }}
+        ItemSeparatorComponent={() => <View className="h-4"></View>}
+        ListHeaderComponent={() => (
+          <View className="w-full">
+            <Text className="text-secondary font-gbold text-ch1 mt-2">
+              New Workout
+            </Text>
+            <Divider />
+            <Text className="text-gray font-gregular text-csub">
+              Edit Details
+            </Text>
+            <FormField
+              Icon={icons.edit}
+              iconSize={15}
+              iconInsideField
+              value={form.workout.name}
+              handleChangeText={(name) =>
+                dispatch({ type: "CHANGE_NAME", name })
+              }
+              placeholder="Enter workout name"
+              containerStyles="mt-2 mb-3"
+            />
+            <DaySelecter />
+            <Divider />
+            <Text className="text-gray font-gregular text-csub">
+              Modify Exercises
+            </Text>
+            <ExerciseBrowser
+              containerStyles="mt-2 mb-4"
+              handleSubmit={(exercise) => dispatch({ type: "ADD_EXERCISE", exercise: exercise })}
+            />
+          </View>
+        )}
+      />
+      <View className="h-[84px] flex-row">
+        <TouchableOpacity
+          className={`bg-secondary flex-1 flex-row space-x-2 items-center justify-center ${isSubmitting && "opacity-75"}`}
+          onPress={() => router.back()}
+          disabled={isSubmitting}
+        >
+          <icons.close />
+          <Text className="text-white font-gbold text-csub">Cancel</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          className={`bg-primary flex-1 flex-row space-x-2 items-center justify-center ${isSubmitting && "opacity-75"}`}
+          onPress={handleSubmit}
+          disabled={isSubmitting}
+        >
+          <icons.checkmark />
+          <Text className="text-white font-gbold text-csub">Confirm</Text>
+        </TouchableOpacity>
+      </View>
+    </>
   );
 };
 
@@ -522,20 +589,6 @@ const NewWorkout = () => {
         edges={["right", "left", "top"]}
       >
         <Editor />
-        <View className="h-[76px] flex-row">
-          <TouchableOpacity className="bg-secondary flex-1 items-center justify-center">
-            <View className="flex-row items-center space-x-2">
-              <icons.close />
-              <Text className="text-white font-gbold text-csub">Cancel</Text>
-            </View>
-          </TouchableOpacity>
-          <TouchableOpacity className="bg-primary flex-1 flex items-center justify-center">
-            <View className="flex-row items-center space-x-2">
-              <icons.checkmark />
-              <Text className="text-white font-gbold text-csub">Confirm</Text>
-            </View>
-          </TouchableOpacity>
-        </View>
       </SafeAreaView>
     </WorkoutProvider>
   );

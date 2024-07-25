@@ -45,7 +45,7 @@ export default function App() {
 
           <CustomButton
             title="Go to Screen"
-            handlePress={() => router.push("/home")}
+            handlePress={() => router.replace("/home")}
             containerStyles="w-full mt-10"
           />
         </View>

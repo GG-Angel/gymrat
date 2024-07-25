@@ -6,33 +6,49 @@ import {
   TouchableOpacity,
   ScrollView,
   Keyboard,
+  Alert,
 } from "react-native";
 import React, { useEffect, useState } from "react";
 import { icons } from "../constants";
-
-const exercises = [
-  "Squats",
-  "Deadlifts",
-  "Bench Press",
-  "Shoulder Press",
-  "Overhead Press",
-  "Barbell Rows",
-  "Pull-ups",
-];
+import { useSQLiteContext } from "expo-sqlite";
+import { generateUUID } from "@/database/database";
 
 const ExerciseBrowser = ({ handleSubmit, containerStyles }) => {
+  const db = useSQLiteContext();
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState([]);
   const [focused, setFocused] = useState(false);
 
   useEffect(() => {
-    setSearchResults(
-      exercises.filter((e) => e.includes(searchQuery)).slice(0, 5)
-    );
+    async function fetchExercises() {
+      const result = await db.getAllAsync(
+        "SELECT * FROM MasterExercise WHERE name LIKE ?",
+        `%${searchQuery}%`
+      );
+      setSearchResults(result.slice(0, 5));
+    }
+    fetchExercises();
   }, [searchQuery]);
 
-  const processSelection = (selectedExercise) => {
-    handleSubmit(selectedExercise);
+  const processSelection = async (exerciseName, masterId) => {
+    const trimmedName = exerciseName.trim();
+    if (trimmedName.length === 0) {
+      Alert.alert(
+        "Invalid Exercise",
+        "Please enter a valid name for your custom exercise"
+      );
+      return;
+    }
+
+    const exerciseMuscles = masterId 
+      ? (await db.getFirstAsync("SELECT muscles FROM MasterExercise WHERE _id = ?", masterId)).muscles 
+      : "";
+    handleSubmit({
+      _id: generateUUID(),
+      master_id: masterId, // will be null if exercise is custom
+      name: exerciseName,
+      tags: exerciseMuscles // will be null if exercise is custom
+    });
     setSearchQuery("");
     setFocused(false);
     Keyboard.dismiss;
@@ -60,24 +76,25 @@ const ExerciseBrowser = ({ handleSubmit, containerStyles }) => {
           onBlur={() => setFocused(false)}
           onChangeText={(s) => setSearchQuery(s)}
           onSubmitEditing={() => processSelection(searchQuery)} // submit custom exercise
+          hitSlop={{ top: 16, bottom: 16, left: 48, right: 24 }}
         />
       </View>
       {(searchQuery || focused) && (
         <FlatList
           className="px-4 py-3 bg-white rounded-b-lg"
           data={searchResults}
-          // keyExtractor
+          keyboardShouldPersistTaps="always"
+          keyExtractor={(item) => item._id}
           renderItem={({ item: exercise, index }) => (
             <TouchableOpacity
               className={`flex-row space-x-2 items-center justify-between bg-white ${
                 index === 4 && "rounded-b-lg"
               }`}
-              onPress={() => processSelection(exercise)}
-              key={index}
+              onPress={() => processSelection(exercise.name, exercise._id)}
             >
               <icons.dumbbell width={14} height={14} />
               <Text className="flex-1 text-gray font-gregular text-body">
-                {exercise}
+                {exercise.name}
               </Text>
               <icons.forward width={7.05} height={12} />
             </TouchableOpacity>
@@ -86,7 +103,7 @@ const ExerciseBrowser = ({ handleSubmit, containerStyles }) => {
           ListEmptyComponent={() => (
             <TouchableOpacity
               className="flex-row items-center justify-between bg-white border-b-lg"
-              onPress={() => processSelection(searchQuery)}
+              onPress={() => processSelection(searchQuery)} // submit custom exercise
             >
               <Text className="text-gray font-gregular text-body">
                 Add as custom exercise

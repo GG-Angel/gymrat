@@ -23,6 +23,7 @@ import close from "../assets/icons/close.svg";
 import expand from "../assets/icons/expand.svg";
 import collapse from "../assets/icons/collapse.svg";
 import trash from "../assets/icons/trash.svg";
+import rest from "../assets/icons/rest.svg";
 
 export default {
   calculator,
@@ -50,4 +51,5 @@ export default {
   expand,
   collapse,
   trash,
+  rest
 };
