@@ -20,6 +20,7 @@ import tabGoals from "../assets/icons/tabGoals.svg";
 import tabProfile from "../assets/icons/tabProfile.svg";
 import empty from "../assets/icons/empty.svg";
 import edit from "../assets/icons/edit.svg";
+import editLarge from "../assets/icons/editLarge.svg";
 import checkmark from "../assets/icons/checkmark.svg";
 import close from "../assets/icons/close.svg";
 import expand from "../assets/icons/expand.svg";
@@ -27,6 +28,8 @@ import collapse from "../assets/icons/collapse.svg";
 import trash from "../assets/icons/trash.svg";
 import rest from "../assets/icons/rest.svg";
 import clear from "../assets/icons/clear.svg";
+import crumbtrail from "../assets/icons/crumbtrail.svg";
+import hamburger from "../assets/icons/hamburger.svg";
 
 export default {
   calculator,
@@ -51,11 +54,14 @@ export default {
   tabProfile,
   empty,
   edit,
+  editLarge,
   checkmark,
   close,
   expand,
   collapse,
   trash,
   rest,
-  clear
+  clear,
+  crumbtrail,
+  hamburger,
 };
