@@ -315,7 +315,7 @@ const FilterBar = () => {
           onPress={() => dispatch({ type: "TOGGLE_FILTER", filter: filter })}
         >
           <Text
-            className={`${state.selectedFilters.includes(filter) ? "text-white font-gsemibold" : "text-secondary font-gregular"} text-cbody`}
+            className={`${state.selectedFilters.includes(filter) ? "text-white font-gsemibold" : "text-gray font-gregular"} text-cbody`}
           >
             {filter}
           </Text>

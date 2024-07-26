@@ -4,6 +4,7 @@ import {
   TouchableOpacity,
   TextInput,
   Alert,
+  FlatList,
 } from "react-native";
 import React, {
   createContext,
@@ -26,6 +27,7 @@ import CustomButton from "@/components/CustomButton";
 import { router } from "expo-router";
 import { generateUUID, saveNewWorkout } from "@/database/database";
 import { useSQLiteContext } from "expo-sqlite";
+import { splitField } from "@/utils/format";
 
 const WorkoutContext = createContext();
 
@@ -408,9 +410,19 @@ const EditorCard = ({ exercise }) => {
               <Text className="text-gray font-gregular text-cbody">
                 {`${exercise.setIds.length} Sets`}
               </Text>
-              {/* <Text className="text-gray font-gregular text-cbody mt-1">
-                {exercise.tags}
-              </Text> */}
+              <FlatList
+                className="flex-row flex-wrap mt-2 mb-[-4px]"
+                data={splitField(exercise.tags)}
+                keyExtractor={(item) => item}
+                renderItem={({ item: tag }) => (
+                  <View className="bg-white-100 py-1 px-2.5 rounded-xl mr-1 mb-1">
+                    <Text className="text-gray font-gregular text-ctri">
+                      {tag}
+                    </Text>
+                  </View>
+                )}
+                scrollEnabled={false}
+              />
             </View>
             <View className="w-[34px] h-[34px] flex justify-center items-center">
               {isExpanded ? <icons.collapse /> : <icons.expand />}
