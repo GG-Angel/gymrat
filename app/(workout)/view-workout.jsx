@@ -15,7 +15,7 @@ const ExerciseCard = ({ exercise }) => {
 const ViewWorkout = () => {
   const db = useSQLiteContext();
   const params = useLocalSearchParams();
-  const [fullWorkout, setFullWorkout] = useState({});
+  const [fullWorkout, setFullWorkout] = useState(null);
 
   useEffect(() => {
     const getFullWorkout = async () => {
@@ -25,6 +25,10 @@ const ViewWorkout = () => {
 
     getFullWorkout();
   }, [db, params._id]);
+
+  useEffect(() => {
+    console.log(JSON.stringify(fullWorkout, null, 2));
+  }, [fullWorkout]);
 
   return (
     <SafeAreaView
@@ -51,7 +55,15 @@ const ViewWorkout = () => {
           <icons.editLarge />
         </TouchableOpacity>
       </View>
-      <FlatList />
+      { fullWorkout && (
+        <FlatList 
+          data={fullWorkout.workout.exerciseIds}
+          keyExtractor={(exerciseId) => exerciseId}
+          renderItem={({ item: exerciseId }) => (
+            <Text>{fullWorkout.exercises[exerciseId].name}</Text>
+          )}
+        />
+      ) }
     </SafeAreaView>
   );
 };
