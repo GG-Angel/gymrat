@@ -1,6 +1,8 @@
 import calculator from "../assets/icons/calculator.svg";
 import dumbbell from "../assets/icons/dumbbell.svg";
 import forward from "../assets/icons/forward.svg";
+import forwardSmall from "../assets/icons/forwardSmall.svg";
+import forwardSelf from "../assets/icons/forwardSelf.svg";
 import forwardCircle from "../assets/icons/forwardCircle.svg";
 import history from "../assets/icons/history.svg";
 import notes from "../assets/icons/notes.svg";
@@ -24,11 +26,14 @@ import expand from "../assets/icons/expand.svg";
 import collapse from "../assets/icons/collapse.svg";
 import trash from "../assets/icons/trash.svg";
 import rest from "../assets/icons/rest.svg";
+import clear from "../assets/icons/clear.svg";
 
 export default {
   calculator,
   dumbbell,
   forward,
+  forwardSmall,
+  forwardSelf,
   forwardCircle,
   history,
   notes,
@@ -51,5 +56,6 @@ export default {
   expand,
   collapse,
   trash,
-  rest
+  rest,
+  clear
 };

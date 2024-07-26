@@ -4,7 +4,7 @@ import React from 'react'
 import { icons } from "../constants"
 import CardContainer from './CardContainer'
 
-const TodaysWorkout = ({
+const TodaysWorkoutDepricated = ({
   isLoading
 }) => {
   return (
@@ -22,13 +22,10 @@ const TodaysWorkout = ({
         onPress={() => {}}
         disabled={isLoading}
       >
-        <icons.forwardCircle 
-          width={34}
-          height={34}
-        />
+        <icons.forwardCircle />
       </TouchableOpacity>
     </CardContainer>
   )
 }
 
-export default TodaysWorkout
+export default TodaysWorkoutDepricated

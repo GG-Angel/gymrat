@@ -12,11 +12,10 @@ import React, {
 } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import { icons } from "../../constants";
+import { Icons, icons } from "../../constants";
 
 import PFP from "../../assets/images/pfp.png";
 
-import TodaysWorkout from "../../components/TodaysWorkout";
 import Divider from "../../components/Divider";
 import CardContainer from "../../components/CardContainer";
 import EmptyState from "../../components/EmptyState";
@@ -24,181 +23,6 @@ import { router } from "expo-router";
 import { useSQLiteContext } from "expo-sqlite";
 import { formatDays, formatTags, splitField } from "../../utils/format";
 import { useFocusEffect } from "@react-navigation/native";
-
-// const LibraryCardTag = ({ tag, isSearched }) => {
-//   return (
-//     <View
-//       className={`${isSearched ? "bg-secondary" : "bg-white-100"} px-[10px] py-1 rounded-[10px] mr-1 mb-1`}
-//     >
-//       <Text
-//         className={`${isSearched ? "text-white font-gsemibold" : "text-gray font-gregular"} text-cbody text-center`}
-//       >
-//         {tag}
-//       </Text>
-//     </View>
-//   );
-// };
-
-// const LibraryCard = ({ name, days, tags, activeFilters }) => {
-//   return (
-//     <CardContainer containerStyles="flex-row items-center space-x-6 mb-3">
-//       <View className="flex-1 space-y-2">
-//         <View className="space-y-1">
-//           <Text className="text-gray font-gregular text-cbody">{days}</Text>
-//           <Text className="text-secondary font-gbold text-csub">{name}</Text>
-//         </View>
-//         {tags.length > 0 && (
-//           <View className="flex-row flex-wrap mb-[-4px]">
-//             {tags.map((tag, index) => (
-//               <LibraryCardTag
-//                 key={index}
-//                 tag={tag}
-//                 isSearched={activeFilters.includes(tag)}
-//               />
-//             ))}
-//           </View>
-//         )}
-//       </View>
-//       <TouchableOpacity
-//         className="w-[34px] h-[34px] items-center justify-center"
-//         onPress={() => {}}
-//       >
-//         <icons.forward width={11} />
-//       </TouchableOpacity>
-//     </CardContainer>
-//   );
-// };
-
-// const Filter = ({ filter, isSelected, handleToggleFilter }) => {
-//   return (
-//     <TouchableOpacity
-//       className={`${
-//         isSelected ? "bg-primary" : "bg-white"
-//       } px-[10px] py-1 rounded-xl w-auto mr-1`}
-//       onPress={() => handleToggleFilter(filter)}
-//     >
-//       <Text
-//         className={`${
-//           isSelected
-//             ? "text-white font-gsemibold"
-//             : "text-secondary font-gregular"
-//         } text-cbody`}
-//       >
-//         {filter}
-//       </Text>
-//     </TouchableOpacity>
-//   );
-// };
-
-// const Home = () => {
-//   const db = useSQLiteContext();
-//   const [workouts, setWorkouts] = useState([]);
-//   const [filters, setFilters] = useState([]);
-//   const [selectedFilters, setSelectedFilters] = useState([]);
-
-//   useFocusEffect(
-//     useCallback(() => {
-//     async function fetchWorkouts() {
-//       const result = await db.getAllAsync("SELECT * FROM Workout;");
-//       setWorkouts(result);
-//     }
-//     async function fetchFilters() {
-//       const result = await db.getAllAsync("SELECT tags FROM Workout;");
-//       setFilters(formatTags(result));
-//     }
-//     fetchWorkouts();
-//     fetchFilters();
-//     }, [])
-//   )
-
-//   const handleToggleFilter = (filter) => {
-//     setSelectedFilters((prev) =>
-//       prev.includes(filter)
-//         ? prev.filter((f) => f !== filter)
-//         : [...prev, filter]
-//     );
-//   };
-
-//   return (
-//     <SafeAreaView
-//       className="bg-white-100"
-//       edges={["right", "left", "top"]}
-//     >
-//       <FlatList
-//         data={workouts}
-//         keyExtractor={(item) => item._id}
-//         renderItem={({ item }) => (
-//           <LibraryCard
-//             name={item.name}
-//             days={formatDays(item.days)}
-//             tags={splitField(item.tags)}
-//             activeFilters={selectedFilters}
-//           />
-//         )}
-//         contentContainerStyle={{ paddingHorizontal: 32, height: "100%" }}
-//         ListHeaderComponent={() => {
-//           if (workouts.length === 0) {
-//             return null;
-//           }
-
-//           return (
-//             <View className="mt-2 mb-4">
-//               <View className="flex-row justify-between items-center">
-//                 <Text className="text-secondary font-gbold text-ch1">Home</Text>
-//                 <Image
-//                   source={PFP}
-//                   resizeMode="contain"
-//                   className="w-9 h-9 rounded-[20px] border-2 border-secondary"
-//                 />
-//               </View>
-//               <Divider />
-//               <View className="mb-6">
-//                 <Text className="font-gregular text-gray text-csub mb-3">
-//                   Recommended Workout
-//                 </Text>
-//                 <TodaysWorkout />
-//               </View>
-//               <View className="mb-2 flex-row justify-between items-center">
-//                 <Text className="font-gregular text-gray text-csub">
-//                   Workout Library
-//                 </Text>
-//                 <TouchableOpacity
-//                   className="w-[22px] h-[22px] flex justify-center items-center"
-//                   onPress={() => router.push("/new-workout")}
-//                 >
-//                   <icons.add width={13} height={13} />
-//                 </TouchableOpacity>
-//               </View>
-//               <FlatList
-//                 data={filters}
-//                 extraData={selectedFilters}
-//                 renderItem={({ item, index }) => (
-//                   <Filter
-//                     key={index}
-//                     filter={item}
-//                     isSelected={selectedFilters.includes(item)}
-//                     handleToggleFilter={handleToggleFilter}
-//                   />
-//                 )}
-//                 showsHorizontalScrollIndicator={false}
-//                 horizontal
-//               />
-//             </View>
-//           );
-//         }}
-//         ListEmptyComponent={() => (
-//           <EmptyState
-//             Image={icons.empty}
-//             headerText="No Workouts Found"
-//             subheadText="Create a workout to begin tracking your progress"
-//             buttonTitle="Create a New Workout"
-//             buttonHandlePress={() => router.push("/new-workout")}
-//           />
-//         )}
-//       />
-//     </SafeAreaView>
-//   );
-// };
 
 const HomeContext = createContext();
 
@@ -216,13 +40,15 @@ function homeReducer(state, action) {
           ? state.selectedFilters.filter((f) => f !== action.filter)
           : [...state.selectedFilters, action.filter],
       };
-    case "REORDER_FILTERS": 
+    case "CLEAR_FILTERS":
       return {
         ...state,
-        orderedFilters: [
-          ...state.selectedFilters,
-          ...action.allFilters.filter((f) => !state.selectedFilters.includes(f))
-        ]
+        selectedFilters: []
+      }
+    case "ORGANIZE_FILTERS": 
+      return {
+        ...state,
+        unselectedFilters: [...action.allFilters.filter((f) => !state.selectedFilters.includes(f))]
       }
     default:
       return state;
@@ -264,8 +90,8 @@ const HomeProvider = ({ children }) => {
   ]);
   const [state, dispatch] = useReducer(homeReducer, {
     workouts: [],
+    unselectedFilters: [],
     selectedFilters: [],
-    orderedFilters: [],
   });
 
   // refetches the workouts when loading the home screen
@@ -288,10 +114,10 @@ const HomeProvider = ({ children }) => {
     }, [])
   );
 
-  // reorders the filter bar when a filter is toggled
+  // reorganizes the filter bar when a filter is toggled
   useEffect(() => {
     dispatch({
-      type: "REORDER_FILTERS",
+      type: "ORGANIZE_FILTERS",
       allFilters: allFiltersRef.current
     })
   }, [state.selectedFilters])
@@ -303,35 +129,86 @@ const HomeProvider = ({ children }) => {
   );
 };
 
+const TodaysWorkout = ({ workout }) => {
+  return (
+    <CardContainer>
+
+    </CardContainer>
+  )
+}
+
+const RecommendedWorkouts = () => {
+  return (
+    <>
+      <TodaysWorkout />
+    </>
+  )
+}
+
 const FilterBar = () => {
   const { state, dispatch } = useContext(HomeContext);
   return (
-    <FlatList
-      data={state.orderedFilters}
-      keyExtractor={(item) => item}
-      renderItem={({ item: filter }) => (
-        <TouchableOpacity
-          className={`${state.selectedFilters.includes(filter) ? "bg-primary" : "bg-white"} px-3 py-1 rounded-xl mr-1`}
-          onPress={() => dispatch({ type: "TOGGLE_FILTER", filter: filter })}
-        >
-          <Text
-            className={`${state.selectedFilters.includes(filter) ? "text-white font-gsemibold" : "text-gray font-gregular"} text-cbody`}
+    <>
+      <FlatList
+        data={state.unselectedFilters}
+        keyExtractor={(item) => item}
+        renderItem={({ item: filter }) => (
+          <TouchableOpacity
+            className="bg-white px-3 py-1 rounded-xl mr-1"
+            onPress={() => dispatch({ type: "TOGGLE_FILTER", filter: filter })}
           >
-            {filter}
-          </Text>
-        </TouchableOpacity>
-      )}
-      horizontal
-      showsHorizontalScrollIndicator={false}
-    />
+            <Text
+              className="text-gray font-gregular text-cbody"
+            >
+              {filter}
+            </Text>
+          </TouchableOpacity>
+        )}
+        horizontal
+        showsHorizontalScrollIndicator={false}
+      />
+      { state.selectedFilters.length > 0 && (
+        <View className="flex-row justify-between items-center space-x-2 mt-2">
+          <FlatList 
+            data={state.selectedFilters}
+            keyExtractor={(item) => item}
+            renderItem={({ item: filter }) => (
+              <TouchableOpacity
+                className="bg-primary px-3 py-1 rounded-xl mr-1"
+                onPress={() => dispatch({ type: "TOGGLE_FILTER", filter: filter })}
+              >
+                <Text
+                  className="text-white font-gsemibold text-cbody"
+                >
+                  {filter}
+                </Text>
+              </TouchableOpacity>
+            )}
+            horizontal
+            showsHorizontalScrollIndicator={false}
+          />
+          <TouchableOpacity
+            onPress={() => dispatch({ type: "CLEAR_FILTERS" })}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          >
+            <icons.clear />
+          </TouchableOpacity>
+        </View>
+      ) }
+    </>
   );
 };
 
 const WorkoutCard = ({ workout }) => {
   const { state } = useContext(HomeContext);
   return (
-    <TouchableOpacity onPress={() => {}}>
-      <CardContainer containerStyles="flex-row justify-between">
+    <TouchableOpacity 
+      onPress={() => router.push({
+        pathname: "/view-workout",
+        params: workout
+      })}
+    >
+      <CardContainer containerStyles="flex-row justify-between items-center">
         <View className="flex-1">
           <Text className="text-gray font-gregular text-cbody">
             {workout.days}
@@ -353,9 +230,7 @@ const WorkoutCard = ({ workout }) => {
             scrollEnabled={false}
           />
         </View>
-        <View className="w-[34px] h-[34px] items-center justify-center">
-          <icons.forward />
-        </View>
+        <icons.forward />
       </CardContainer>
     </TouchableOpacity>
   );
@@ -372,14 +247,17 @@ const HomePage = () => {
         <Text className="text-gray font-gregular text-csub mb-3">
           Recommended Workouts
         </Text>
-        <CardContainer></CardContainer>
+        <RecommendedWorkouts />
       </View>
       <View className="mt-6">
         <View className="flex-row justify-between items-center">
           <Text className="text-gray font-gregular text-csub mb-3">
             Workout Library
           </Text>
-          <TouchableOpacity onPress={() => router.push("/new-workout")}>
+          <TouchableOpacity 
+            onPress={() => router.push("/new-workout")}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          >
             <icons.add />
           </TouchableOpacity>
         </View>
@@ -387,9 +265,11 @@ const HomePage = () => {
       </View>
       <FlatList
         className="mt-4"
+        contentContainerStyle={{ paddingBottom: 72 }}
         data={state.workouts}
         keyExtractor={(item) => item._id}
         renderItem={({ item: workout }) => <WorkoutCard workout={workout} />}
+        ItemSeparatorComponent={() => <View className="h-[12px]"></View>}
       />
     </>
   );

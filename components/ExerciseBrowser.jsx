@@ -60,7 +60,7 @@ const ExerciseBrowser = ({ handleSubmit, containerStyles }) => {
       keyboardShouldPersistTaps="always"
     >
       <View
-        className={`flex-row w-full py-3 px-4 mb-0 space-x-3 items-center bg-white ${
+        className={`flex-row w-full py-3 px-4 mb-0 space-x-2 items-center bg-white ${
           searchQuery || focused
             ? "rounded-t-lg border-b-[1px] border-gray-200"
             : "rounded-lg border-none"
@@ -68,7 +68,7 @@ const ExerciseBrowser = ({ handleSubmit, containerStyles }) => {
       >
         <icons.search width={14} height={14} />
         <TextInput
-          className="flex-1 text-secondary font-gregular text-body"
+          className="flex-1 text-secondary font-gregular text-[14px]"
           value={searchQuery}
           placeholder="Search for an exercise to add"
           placeholderTextColor="#6A6A6A"
@@ -96,7 +96,7 @@ const ExerciseBrowser = ({ handleSubmit, containerStyles }) => {
               <Text className="flex-1 text-gray font-gregular text-body">
                 {exercise.name}
               </Text>
-              <icons.forward width={7.05} height={12} />
+              <icons.forwardSelf width={7.05} height={12} />
             </TouchableOpacity>
           )}
           ItemSeparatorComponent={() => <View className="h-2 bg-white"></View>}
@@ -108,7 +108,7 @@ const ExerciseBrowser = ({ handleSubmit, containerStyles }) => {
               <Text className="text-gray font-gregular text-body">
                 Add as custom exercise
               </Text>
-              <icons.forward width={7.05} height={12} />
+              <icons.forwardSelf width={7.05} height={12} />
             </TouchableOpacity>
           )}
         />
