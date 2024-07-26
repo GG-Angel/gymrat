@@ -1,4 +1,10 @@
-import { joinField, parseRounded, parseWhole, splitField } from "@/utils/format";
+import {
+  formatDays,
+  joinField,
+  parseRounded,
+  parseWhole,
+  splitField,
+} from "@/utils/format";
 import { SQLiteDatabase } from "expo-sqlite";
 import uuid from "react-native-uuid";
 
@@ -6,7 +12,7 @@ interface LastInsertRowIdResult {
   "last_insert_rowid()": number;
 }
 
-interface NewWorkoutForm {
+interface EditWorkout {
   workout: {
     _id: string;
     name: string;
@@ -32,6 +38,66 @@ interface NewWorkoutForm {
       reps: string | null;
     };
   };
+}
+
+interface FullWorkout {
+  workout: {
+    _id: string;
+    name: string;
+    days: string[];
+    tags: string[];
+    exerciseIds: string[];
+  };
+  exercises: {
+    [exerciseId: string]: {
+      _id: string;
+      master_id: string | null;
+      name: string;
+      rest: string;
+      notes: string;
+      tags: string[];
+      setIds: string[];
+    };
+  };
+  sets: {
+    [setId: string]: {
+      _id: string;
+      type: "Standard" | "Warm-up" | "Drop" | "Failure";
+      weight: string | null;
+      reps: string | null;
+    };
+  };
+}
+
+interface FetchedWorkout {
+  _id: string;
+  name: string;
+  days: string;
+  tags: string;
+}
+
+interface FetchedExercise {
+  _id: string;
+  workout_id: string;
+  master_id: string | null;
+  name: string;
+  rest: number;
+  notes: string;
+  tags: string;
+}
+
+interface FetchedExerciseSet {
+  _id: string;
+  exercise_id: string;
+  type: "Standard" | "Warm-up" | "Drop" | "Failure";
+  weight: number | null;
+  reps: number | null;
+}
+
+interface FetchedMasterExercise {
+  _id: string;
+  name: string;
+  muscles: string;
 }
 
 export const setupDatabase = async (db: SQLiteDatabase) => {
@@ -97,7 +163,7 @@ export const setupDatabase = async (db: SQLiteDatabase) => {
 
 export const saveNewWorkout = async (
   db: SQLiteDatabase,
-  form: NewWorkoutForm
+  form: EditWorkout
 ): Promise<void> => {
   const { workout, exercises, sets } = form;
 
@@ -455,8 +521,14 @@ const setupMasterTable = async (db: SQLiteDatabase): Promise<void> => {
 
 const setupDummyData = async (db: SQLiteDatabase): Promise<void> => {
   const workoutId: string = generateUUID();
-  const masterIdChest: string = (await db.getFirstAsync(`SELECT _id FROM MasterExercise WHERE name = ?`, "Machine Chest Press"))!;
-  const masterIdShoulders: string = (await db.getFirstAsync(`SELECT _id FROM MasterExercise WHERE name = ?`, "Overhead Press"))!;
+  const masterIdChest: string = (await db.getFirstAsync(
+    `SELECT _id FROM MasterExercise WHERE name = ?`,
+    "Machine Chest Press"
+  ))!;
+  const masterIdShoulders: string = (await db.getFirstAsync(
+    `SELECT _id FROM MasterExercise WHERE name = ?`,
+    "Overhead Press"
+  ))!;
   const exerciseIds: string[] = [generateUUID(), generateUUID()] as string[];
   const setIds: string[] = [
     generateUUID(),
@@ -467,7 +539,7 @@ const setupDummyData = async (db: SQLiteDatabase): Promise<void> => {
     generateUUID(),
   ] as string[];
 
-  const dummyWorkout: NewWorkoutForm = {
+  const dummyWorkout: EditWorkout = {
     workout: {
       _id: workoutId,
       name: "My Personal Workout",
@@ -536,6 +608,64 @@ const setupDummyData = async (db: SQLiteDatabase): Promise<void> => {
   };
 
   await saveNewWorkout(db, dummyWorkout);
+};
+
+export const fetchFullWorkout = async (
+  db: SQLiteDatabase,
+  workoutId: string
+): Promise<FullWorkout> => {
+  const workout: FetchedWorkout = (await db.getFirstAsync(
+    "SELECT * FROM Workout WHERE _id = ?",
+    workoutId
+  ))!;
+  const exercises: FetchedExercise[] = await db.getAllAsync(
+    "SELECT * FROM Exercise WHERE workout_id = ?",
+    workoutId
+  );
+  const exerciseIds: string[] = exercises.map((e) => e._id);
+
+  const fullWorkout: FullWorkout = {
+    workout: {
+      _id: workout._id,
+      name: workout.name,
+      days: splitField(workout.days),
+      tags: splitField(workout.tags),
+      exerciseIds: exerciseIds,
+    },
+    exercises: {},
+    sets: {},
+  };
+
+  await Promise.all(exercises.map(async (exercise) => {
+    const sets: FetchedExerciseSet[] = await db.getAllAsync(
+      "SELECT * FROM ExerciseSet WHERE exercise_id = ?",
+      exercise._id
+    );
+    const setIds: string[] = sets.map((s) => s._id);
+
+    fullWorkout.exercises[exercise._id] = {
+      _id: exercise._id,
+      master_id: exercise.master_id,
+      name: exercise.name,
+      rest: `${exercise.rest}`,
+      notes: exercise.notes,
+      tags: splitField(exercise.tags),
+      setIds: setIds,
+    };
+
+    sets.forEach((set) => {
+      fullWorkout.sets[set._id] = {
+        _id: set._id,
+        type: set.type,
+        weight: set.weight ? `${set.weight}` : null,
+        reps: set.reps ? `${set.reps}` : null
+      }
+    });
+  }));
+
+  // console.log("Fetched full workout from database:", JSON.stringify(fullWorkout, null, 2));
+
+  return fullWorkout;
 };
 
 const getLastInsertRowId = async (db: SQLiteDatabase): Promise<number> => {
