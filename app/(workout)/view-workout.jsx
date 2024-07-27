@@ -1,5 +1,5 @@
 import { View, Text, TouchableOpacity, FlatList } from "react-native";
-import React, { createContext, useContext, useEffect, useMemo, useReducer, useRef, useState } from "react";
+import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { router, useLocalSearchParams } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { icons } from "../../constants";
@@ -8,6 +8,7 @@ import CardContainer from "../../components/CardContainer";
 import { fetchFullWorkout } from "../../database/database";
 import { useSQLiteContext } from "expo-sqlite";
 import { formatRest } from "../../utils/format";
+import CustomButton from "../../components/CustomButton";
 
 const ViewWorkoutContext = createContext();
 
@@ -156,7 +157,7 @@ const ViewWorkoutPage = () => {
   const { fullWorkout } = useContext(ViewWorkoutContext);
   
   return (
-    <>
+    <View className="flex-1">
       <View className="flex-row justify-between items-center space-x-2 mt-2">
         <View className="flex-row flex-1 items-center space-x-2">
           <TouchableOpacity onPress={() => router.back()}>
@@ -187,19 +188,22 @@ const ViewWorkoutPage = () => {
               <ExerciseCard exercise={fullWorkout.exercises[exerciseId]} />
             )}
             ItemSeparatorComponent={() => <View className="h-4"></View>}
-            contentContainerStyle={{ paddingBottom: 80 }}
+            contentContainerStyle={{ paddingBottom: 200 }}
           />
         </>
       )}
-    </>
+      <View className="w-full absolute bottom-12">
+        <CustomButton 
+          title="Start Workout"
+          handlePress={() => {}}
+        />
+      </View>
+    </View>
   );
 }
 
-const ViewWorkout = () => {
-  const db = useSQLiteContext();
-  const params = useLocalSearchParams();
-  const [fullWorkout, setFullWorkout] = useState(null);
 
+const ViewWorkout = () => {
   return (
     <ViewWorkoutProvider>
       <SafeAreaView
