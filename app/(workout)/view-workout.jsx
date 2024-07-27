@@ -7,6 +7,7 @@ import Divider from "../../components/Divider";
 import CardContainer from "../../components/CardContainer";
 import { fetchFullWorkout } from "../../database/database";
 import { useSQLiteContext } from "expo-sqlite";
+import { formatRest } from "../../utils/format";
 
 const ViewWorkoutContext = createContext();
 
@@ -140,6 +141,11 @@ const ExerciseCard = ({ exercise }) => {
               </View>
             )}
           />
+          <View className="bg-white-100 px-2.5 py-1 rounded-md mt-4 flex-shrink self-start">
+            <Text className="text-gray font-gregular text-cbody">
+              Rest for {formatRest(exercise.rest)}
+            </Text>
+          </View>
         </CardContainer>
       ) }
     </>

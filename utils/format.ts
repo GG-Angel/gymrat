@@ -37,6 +37,18 @@ export const formatTags = (fields: TagsResult[]): string[] => {
   return uniqueTags;
 }
 
+export const formatRest = (totalSeconds: number): string => {
+  function padLeft(num: number, pad: string, length: number): string {
+    return (new Array(length + 1).join(pad) + num).slice(-length);
+  }
+  
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds - minutes * 60;
+  const finalTime = padLeft(minutes, '0', 2) + ':' + padLeft(seconds, '0', 2);
+
+  return finalTime;
+}
+
 export const parseRounded = (value: string | number): number => {
   const num = typeof value === "string" ? parseFloat(value) : value;
 
