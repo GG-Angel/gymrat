@@ -195,7 +195,10 @@ const ViewWorkoutPage = () => {
       <View className="w-full absolute bottom-12 shadow-lg shadow-primary">
         <CustomButton 
           title="Start Workout"
-          handlePress={() => {}}
+          handlePress={() => router.push({
+            pathname: "/in-progress-workout",
+            params: fullWorkout
+          })}
         />
       </View>
     </View>
