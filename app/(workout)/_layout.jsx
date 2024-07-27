@@ -7,6 +7,7 @@ const WorkoutLayout = () => {
     <>
       <Stack>
         <Stack.Screen name="view-workout" options={{ headerShown: false }} />
+        <Stack.Screen name="do-workout" options={{ headerShown: false }} />
       </Stack>
       <StatusBar style="dark" />
     </>
