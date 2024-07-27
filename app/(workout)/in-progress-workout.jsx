@@ -1,6 +1,7 @@
-import { View, Text, SafeAreaView } from 'react-native'
-import React, { createContext, useMemo, useReducer } from 'react'
-import { useLocalSearchParams } from 'expo-router'
+import { View, Text } from "react-native";
+import React, { createContext, useContext, useEffect, useMemo, useReducer } from "react";
+import { useLocalSearchParams } from "expo-router";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 const WorkoutContext = createContext();
 
@@ -16,7 +17,7 @@ const WorkoutProvider = ({ children }) => {
   const [state, dispatch] = useReducer(workoutReducer, {
     fullWorkout: fullWorkout,
     currentExercise: 0, // corresponds to workout.exerciseIds index
-    currentSet: 0,      // corresponds to exercise.setIds index
+    currentSet: 0, // corresponds to exercise.setIds index
   });
 
   const contextValue = useMemo(() => ({ state, dispatch }), [state, dispatch]);
@@ -25,20 +26,29 @@ const WorkoutProvider = ({ children }) => {
     <WorkoutContext.Provider value={contextValue}>
       {children}
     </WorkoutContext.Provider>
-  )
-}
+  );
+};
+
+const InProgressWorkoutPage = () => {
+  const { state, dispatch } = useContext(WorkoutContext);
+  
+  return (
+    <>
+      <View className="mt-2">
+        
+      </View>
+    </>
+  );
+};
 
 const InProgressWorkout = () => {
   return (
     <WorkoutProvider>
-      <SafeAreaView
-        className="bg-white-100 h-full px-8"
-        edges={["right", "left", "top"]}
-      >
-        
+      <SafeAreaView className="bg-white-100 h-full px-8">
+        <InProgressWorkoutPage />
       </SafeAreaView>
     </WorkoutProvider>
-  )
-}
+  );
+};
 
-export default InProgressWorkout
+export default InProgressWorkout;
