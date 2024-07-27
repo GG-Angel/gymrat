@@ -251,7 +251,7 @@ const DaySelecter = () => {
 
 const SetTypeEditor = ({ index, type, handlePress }) => {
   const styles = useRef({
-    Standard: {
+    "Standard": {
       container: "bg-white-100",
       text: "text-gray font-gregular",
     },
@@ -259,11 +259,11 @@ const SetTypeEditor = ({ index, type, handlePress }) => {
       container: "bg-yellow",
       text: "text-white font-gbold",
     },
-    Drop: {
+    "Drop": {
       container: "bg-purple",
       text: "text-white font-gbold",
     },
-    Failure: {
+    "Failure": {
       container: "bg-red",
       text: "text-white font-gbold",
     },
