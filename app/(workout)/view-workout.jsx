@@ -196,7 +196,7 @@ const ViewWorkoutPage = () => {
         <CustomButton 
           title="Start Workout"
           handlePress={() => router.push({
-            pathname: "/in-progress-workout",
+            pathname: "/active-workout",
             params: { jsonWorkout: JSON.stringify(fullWorkout) } // for some reason we need to do this
           })}
         />
