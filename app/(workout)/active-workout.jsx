@@ -5,6 +5,8 @@ import React, {
   useEffect,
   useMemo,
   useReducer,
+  useRef,
+  useState,
 } from "react";
 import { useLocalSearchParams } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -24,53 +26,56 @@ function workoutReducer(state, action) {
         } else {
           // go to previous exercise
           const prevExerciseIndex = state.exerciseIndex - 1;
-          const prevExerciseId = state.routine.workout.exerciseIds[prevExerciseIndex];
+          const prevExerciseId =
+            state.routine.workout.exerciseIds[prevExerciseIndex];
           const prevExercise = state.routine.exercises[prevExerciseId];
           const prevSetIndex = prevExercise.setIds.length - 1;
 
           return {
             ...state,
             exerciseIndex: prevExerciseIndex,
-            setIndex: prevSetIndex
-          }
+            setIndex: prevSetIndex,
+          };
         }
       } else {
         // go to previous set
         return {
           ...state,
-          setIndex: state.setIndex - 1
-        }
+          setIndex: state.setIndex - 1,
+        };
       }
-      
+
     case "NEXT_SET":
-      const currentExerciseId = state.routine.workout.exerciseIds[state.exerciseIndex];
+      const currentExerciseId =
+        state.routine.workout.exerciseIds[state.exerciseIndex];
       const currentExercise = state.routine.exercises[currentExerciseId];
-      
-      const isLastExercise = state.exerciseIndex === state.routine.workout.exerciseIds.length - 1;
+
+      const isLastExercise =
+        state.exerciseIndex === state.routine.workout.exerciseIds.length - 1;
       const isLastSet = state.setIndex === currentExercise.setIds.length - 1;
 
       if (isLastSet) {
         if (isLastExercise) {
           // workout finished, repeat
-          return { 
+          return {
             ...state,
             exerciseIndex: 0,
-            setIndex: 0
-          }
+            setIndex: 0,
+          };
         } else {
           // go to next exercise
           return {
             ...state,
             exerciseIndex: state.exerciseIndex + 1,
-            setIndex: 0
-          }
+            setIndex: 0,
+          };
         }
       } else {
         // go to next set
         return {
           ...state,
-          setIndex: state.setIndex + 1
-        }
+          setIndex: state.setIndex + 1,
+        };
       }
     default:
       return state;
@@ -84,10 +89,23 @@ const WorkoutProvider = ({ children }) => {
   const [state, dispatch] = useReducer(workoutReducer, {
     routine: routine,
     exerciseIndex: 0, // corresponds to workout.exerciseIds index
-    setIndex: 0,      // corresponds to exercise.setIds index
+    setIndex: 0, // corresponds to exercise.setIds index
   });
 
-  const contextValue = useMemo(() => ({ state, dispatch }), [state, dispatch]);
+  function getCurrentExercise() {
+    return state.routine.exercises[
+      state.routine.workout.exerciseIds[state.exerciseIndex]
+    ];
+  }
+
+  function getCurrentSet() {
+    return state.routine.sets[getCurrentExercise().setIds[state.setIndex]];
+  }
+
+  const contextValue = useMemo(
+    () => ({ state, dispatch, getCurrentExercise, getCurrentSet }),
+    [state, dispatch, getCurrentExercise, getCurrentSet]
+  );
 
   // useEffect(() => {
   //   console.log(JSON.stringify(state, null, 2))
@@ -100,22 +118,64 @@ const WorkoutProvider = ({ children }) => {
   );
 };
 
+const SetTypeIndicator = ({ type }) => {
+  const colors = useRef({
+    Standard: "secondary",
+    "Warm-up": "yellow",
+    Drop: "purple",
+    Failure: "red",
+  });
+
+  return (
+    <View className={`bg-${colors.current[type]} px-2.5 py-1 rounded-xl`}>
+      <Text className="text-white font-gsemibold text-cbody">{type} Set</Text>
+    </View>
+  );
+};
+
 const InProgressWorkoutPage = () => {
-  const { state, dispatch } = useContext(WorkoutContext);
+  const { state, dispatch, getCurrentExercise, getCurrentSet } =
+    useContext(WorkoutContext);
+  const [currentExercise, setCurrentExercise] = useState(getCurrentExercise());
+  const [currentSet, setCurrentSet] = useState(getCurrentSet());
+
+  useEffect(() => {
+    const exercise = getCurrentExercise();
+    setCurrentExercise(exercise);
+  }, [state.routine.exercises[currentExercise._id], state.exerciseIndex]);
+
+  useEffect(() => {
+    const set = getCurrentSet();
+    setCurrentSet(set);
+  }, [state.routine.sets[currentSet._id], state.setIndex]);
 
   return (
     <>
       <View className="mt-2">
-        <Text className="text-gray font-gregular text-csub"></Text>
-        <View className="flex-row justify-between">
-          <TouchableOpacity onPress={() => dispatch({ type: "PREVIOUS_SET" })}>
-            <Text>Previous</Text>
-          </TouchableOpacity>
-          <TouchableOpacity onPress={() => dispatch({ type: "NEXT_SET" })}>
-            <Text>Next</Text>
-          </TouchableOpacity>
-        </View>
+        <Text className="text-gray font-gregular text-csub">
+          {state.routine.workout.name}
+        </Text>
+        <Text className="text-secondary font-gbold text-ch1">
+          {currentExercise.name}
+        </Text>
       </View>
+      <View className="flex flex-row items-center mt-2">
+        <View className="bg-primary px-2.5 py-1 rounded-xl mr-1">
+          <Text className="text-white font-gsemibold text-cbody">
+            Set {state.setIndex + 1}/{currentExercise.setIds.length}
+          </Text>
+        </View>
+        <SetTypeIndicator type={currentSet.type} />
+      </View>
+
+      {/* <View className="flex-row justify-between mt-8">
+        <TouchableOpacity onPress={() => dispatch({ type: "PREVIOUS_SET" })}>
+          <Text>Previous</Text>
+        </TouchableOpacity>
+        <TouchableOpacity onPress={() => dispatch({ type: "NEXT_SET" })}>
+          <Text>Next</Text>
+        </TouchableOpacity>
+      </View> */}
     </>
   );
 };
@@ -131,3 +191,12 @@ const ActiveWorkout = () => {
 };
 
 export default ActiveWorkout;
+
+{
+  /* <TouchableOpacity onPress={() => dispatch({ type: "PREVIOUS_SET" })}>
+  <Text>Previous</Text>
+</TouchableOpacity>
+<TouchableOpacity onPress={() => dispatch({ type: "NEXT_SET" })}>
+  <Text>Next</Text>
+</TouchableOpacity> */
+}
