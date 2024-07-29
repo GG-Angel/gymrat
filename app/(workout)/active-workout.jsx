@@ -27,8 +27,8 @@ function workoutReducer(state, action) {
           // go to previous exercise
           const prevExerciseIndex = state.exerciseIndex - 1;
           const prevExerciseId =
-            state.routine.workout.exerciseIds[prevExerciseIndex];
-          const prevExercise = state.routine.exercises[prevExerciseId];
+            state.workout.exerciseIds[prevExerciseIndex];
+          const prevExercise = state.exercises[prevExerciseId];
           const prevSetIndex = prevExercise.setIds.length - 1;
 
           return {
@@ -47,11 +47,11 @@ function workoutReducer(state, action) {
 
     case "NEXT_SET":
       const currentExerciseId =
-        state.routine.workout.exerciseIds[state.exerciseIndex];
-      const currentExercise = state.routine.exercises[currentExerciseId];
+        state.workout.exerciseIds[state.exerciseIndex];
+      const currentExercise = state.exercises[currentExerciseId];
 
       const isLastExercise =
-        state.exerciseIndex === state.routine.workout.exerciseIds.length - 1;
+        state.exerciseIndex === state.workout.exerciseIds.length - 1;
       const isLastSet = state.setIndex === currentExercise.setIds.length - 1;
 
       if (isLastSet) {
@@ -84,22 +84,22 @@ function workoutReducer(state, action) {
 
 const WorkoutProvider = ({ children }) => {
   const params = useLocalSearchParams();
-  const routine = JSON.parse(params.jsonWorkout);
+  const fullWorkout = JSON.parse(params.jsonWorkout);
 
   const [state, dispatch] = useReducer(workoutReducer, {
-    routine: routine,
+    ...fullWorkout,
     exerciseIndex: 0, // corresponds to workout.exerciseIds index
-    setIndex: 0, // corresponds to exercise.setIds index
+    setIndex: 0,      // corresponds to exercise.setIds index
   });
 
   function getCurrentExercise() {
-    return state.routine.exercises[
-      state.routine.workout.exerciseIds[state.exerciseIndex]
+    return state.exercises[
+      state.workout.exerciseIds[state.exerciseIndex]
     ];
   }
 
   function getCurrentSet() {
-    return state.routine.sets[getCurrentExercise().setIds[state.setIndex]];
+    return state.sets[getCurrentExercise().setIds[state.setIndex]];
   }
 
   const contextValue = useMemo(
@@ -142,18 +142,18 @@ const InProgressWorkoutPage = () => {
   useEffect(() => {
     const exercise = getCurrentExercise();
     setCurrentExercise(exercise);
-  }, [state.routine.exercises[currentExercise._id], state.exerciseIndex]);
+  }, [state.exercises[currentExercise._id], state.exerciseIndex]);
 
   useEffect(() => {
     const set = getCurrentSet();
     setCurrentSet(set);
-  }, [state.routine.sets[currentSet._id], state.setIndex]);
+  }, [state.sets[currentSet._id], state.setIndex]);
 
   return (
     <>
       <View className="mt-2">
         <Text className="text-gray font-gregular text-csub">
-          {state.routine.workout.name}
+          {state.workout.name}
         </Text>
         <Text className="text-secondary font-gbold text-ch1">
           {currentExercise.name}
