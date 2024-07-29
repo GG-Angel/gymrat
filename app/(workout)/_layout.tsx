@@ -14,6 +14,6 @@ const WorkoutLayout = () => {
   );
 };
 
-// add gesture enabled false to "in progress" later
+// add gesture enabled false to "active-workout" later
 
 export default WorkoutLayout;

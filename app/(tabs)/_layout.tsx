@@ -1,17 +1,24 @@
 import { View, Text } from 'react-native'
 import React from 'react'
+import { SvgProps } from "react-native-svg";
 
 import { icons } from "../../constants"
 import { Tabs } from 'expo-router'
 import { StatusBar } from 'expo-status-bar'
 
-const TabIcon = ({ Icon, iconSize, color }) => {
+interface TabIconProps {
+  Icon: React.FC<SvgProps>;
+  iconSize: number;
+  color: string;
+}
+
+const TabIcon = ({ Icon, iconSize, color }: TabIconProps) => {  
   return (
     <View className="w-8 h-8 flex justify-center items-center">
       <Icon 
         width={iconSize}
         height={iconSize}
-        style={{ color: color }}
+        color={color}
       />
     </View>
   )
@@ -95,4 +102,4 @@ const TabsLayout = () => {
   )
 }
 
-export default TabsLayout
+export default TabsLayout;
