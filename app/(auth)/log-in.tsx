@@ -7,13 +7,16 @@ import { Icons } from "../../constants";
 import CustomButton from "../../components/CustomButton";
 import { Link, router } from "expo-router";
 
+type FormState = {
+  email: string;
+  password: string;
+}
+
 const LogIn = () => {
-  const [form, setForm] = useState({
+  const [form, setForm] = useState<FormState>({
     email: "",
     password: ""
-  })
-
-  console.log(form);
+  });
 
   const handleSubmit = () => {
     router.replace("/home");
@@ -55,6 +58,7 @@ const LogIn = () => {
             </View>
             <CustomButton
               title="Sign In"
+              style="primary"
               handlePress={handleSubmit}
               containerStyles="w-full"
             />

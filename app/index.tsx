@@ -16,6 +16,7 @@ export default function App() {
         <View className="h-full justify-center items-center">
           <CustomButton
             title="This is a Button"
+            style="secondary"
             handlePress={() => {}}
             containerStyles="w-full"
           />
@@ -23,6 +24,7 @@ export default function App() {
             title="Example Form"
             Icon={Icons.dumbbell}
             iconSize={17.48}
+            handleChangeText={() => {}}
             placeholder="Placeholder text"
             containerStyles="mt-2"
           />
@@ -45,6 +47,7 @@ export default function App() {
 
           <CustomButton
             title="Go to Screen"
+            style="primary"
             handlePress={() => router.replace("/home")}
             containerStyles="w-full mt-10"
           />

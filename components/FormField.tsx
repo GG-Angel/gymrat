@@ -6,8 +6,8 @@ import EyeHide from "../assets/icons/eyeHide.svg";
 import { SvgProps } from "react-native-svg";
 
 interface FormFieldProps {
-  Icon: React.FC<SvgProps>;
-  iconSize: number;
+  Icon?: React.FC<SvgProps>;
+  iconSize?: number;
   iconInsideField?: boolean;
   title: string;
   value?: string;
