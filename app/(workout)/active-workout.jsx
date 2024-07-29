@@ -1,4 +1,4 @@
-import { View, Text, TouchableOpacity } from "react-native";
+import { View, Text, TouchableOpacity, TextInput } from "react-native";
 import React, {
   createContext,
   useContext,
@@ -12,6 +12,7 @@ import { router, useLocalSearchParams } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Icons from "@/constants/icons";
 import CustomButton from "@/components/CustomButton";
+import CardContainer from "@/components/CardContainer";
 
 const WorkoutContext = createContext();
 
@@ -36,7 +37,7 @@ function workoutReducer(state, action) {
             ...state,
             exerciseIndex: prevExerciseIndex,
             setIndex: prevSetIndex,
-            elapsedSets: state.elapsedSets - 1
+            elapsedSets: state.elapsedSets - 1,
           };
         }
       } else {
@@ -44,7 +45,7 @@ function workoutReducer(state, action) {
         return {
           ...state,
           setIndex: state.setIndex - 1,
-          elapsedSets: state.elapsedSets - 1
+          elapsedSets: state.elapsedSets - 1,
         };
       }
 
@@ -63,7 +64,7 @@ function workoutReducer(state, action) {
             ...state,
             exerciseIndex: 0,
             setIndex: 0,
-            elapsedSets: 0
+            elapsedSets: 0,
           };
         } else {
           // go to next exercise
@@ -71,7 +72,7 @@ function workoutReducer(state, action) {
             ...state,
             exerciseIndex: state.exerciseIndex + 1,
             setIndex: 0,
-            elapsedSets: state.elapsedSets + 1
+            elapsedSets: state.elapsedSets + 1,
           };
         }
       } else {
@@ -79,7 +80,7 @@ function workoutReducer(state, action) {
         return {
           ...state,
           setIndex: state.setIndex + 1,
-          elapsedSets: state.elapsedSets + 1
+          elapsedSets: state.elapsedSets + 1,
         };
       }
     default:
@@ -99,6 +100,26 @@ const WorkoutProvider = ({ children }) => {
     workoutLength: calculateWorkoutLength(), // calculates the number of total sets in the workout
   });
 
+  const [currentExercise, setCurrentExercise] = useState(getCurrentExercise());
+  const [currentSet, setCurrentSet] = useState(getCurrentSet());
+
+  useEffect(() => {
+    const exercise = getCurrentExercise();
+    setCurrentExercise(exercise);
+  }, [state.exercises[currentExercise._id], state.exerciseIndex]);
+
+  useEffect(() => {
+    const set = getCurrentSet();
+    setCurrentSet(set);
+  }, [state.sets[currentSet._id], state.setIndex]);
+
+  const setTypeColorsRef = useRef({
+    Standard: "secondary",
+    "Warm-up": "yellow",
+    Drop: "purple",
+    Failure: "red",
+  });
+
   function calculateWorkoutLength() {
     return fullWorkout.workout.exerciseIds.reduce((totalSets, exerciseId) => {
       const exercise = fullWorkout.exercises[exerciseId];
@@ -115,13 +136,13 @@ const WorkoutProvider = ({ children }) => {
   }
 
   const contextValue = useMemo(
-    () => ({ state, dispatch, getCurrentExercise, getCurrentSet }),
-    [state, dispatch, getCurrentExercise, getCurrentSet]
+    () => ({ state, dispatch, currentExercise, currentSet, setTypeColorsRef }),
+    [state, dispatch, currentExercise, currentSet, setTypeColorsRef]
   );
 
-  // useEffect(() => {
-  //   console.log(JSON.stringify(state, null, 2))
-  // }, [state]);
+  useEffect(() => {
+    console.log(JSON.stringify(state, null, 2))
+  }, [state]);
 
   return (
     <WorkoutContext.Provider value={contextValue}>
@@ -140,43 +161,90 @@ const ProgressBar = () => {
 
   return (
     <View className="flex-row items-center">
-      <View className={`bg-primary h-1.5 rounded-md ${progress < 1 && "rounded-r-none"}`} style={{ flex: progress }}></View>
-      <View className={`bg-gray-200 h-1.5 rounded-md ${progress > 0 && "rounded-l-none"}`} style={{ flex: 1 - progress }}></View>
+      <View
+        className={`bg-primary h-1.5 rounded-md ${progress < 1 && "rounded-r-none"}`}
+        style={{ flex: progress }}
+      ></View>
+      <View
+        className={`bg-gray-200 h-1.5 rounded-md ${progress > 0 && "rounded-l-none"}`}
+        style={{ flex: 1 - progress }}
+      ></View>
     </View>
-  )
-}
+  );
+};
 
 const SetTypeIndicator = ({ type }) => {
-  const colors = useRef({
-    Standard: "secondary",
-    "Warm-up": "yellow",
-    Drop: "purple",
-    Failure: "red",
-  });
-
+  const { setTypeColorsRef } = useContext(WorkoutContext);
   return (
-    <View className={`bg-${colors.current[type]} px-2.5 py-1 rounded-xl`}>
+    <View
+      className={`bg-${setTypeColorsRef.current[type]} px-2.5 py-1 rounded-xl`}
+    >
       <Text className="text-white font-gsemibold text-cbody">{type} Set</Text>
     </View>
   );
 };
 
+const Counter = ({ field, value, handleChangeValue, containerStyles }) => {
+  return (
+    <CardContainer
+      containerStyles={`flex-row items-center justify-between ${containerStyles}`}
+    >
+      <TouchableOpacity
+        onPress={() => handleChangeValue(field, "subtract")}
+        onLongPress={() => {}}
+      >
+        <Icons.subtractCircle />
+      </TouchableOpacity>
+      <View>
+        <TextInput
+          className="w-full text-secondary font-gbold text-ch1 text-center"
+          value={value || ""}
+          placeholder="N/A"
+          placeholderTextColor="#6A6A6A" // 25%
+          onChangeText={(newValue) => handleChangeValue(field, "manual", newValue)}
+          keyboardType="numeric"
+          maxLength={7}
+        />
+        <Text className="text-secondary font-gregular text-csub text-center">
+          {field}
+        </Text>
+      </View>
+      <TouchableOpacity
+        onPress={() => handleChangeValue(field, "add")}
+        onLongPress={() => {}}
+      >
+        <Icons.addCircle />
+      </TouchableOpacity>
+    </CardContainer>
+  );
+};
+
 const InProgressWorkoutPage = () => {
-  const { state, dispatch, getCurrentExercise, getCurrentSet } =
+  const { state, dispatch, currentExercise, currentSet } =
     useContext(WorkoutContext);
-  const [currentExercise, setCurrentExercise] = useState(getCurrentExercise());
-  const [currentSet, setCurrentSet] = useState(getCurrentSet());
 
-  useEffect(() => {
-    const exercise = getCurrentExercise();
-    setCurrentExercise(exercise);
-  }, [state.exercises[currentExercise._id], state.exerciseIndex]);
-
-  useEffect(() => {
-    const set = getCurrentSet();
-    setCurrentSet(set);
-  }, [state.sets[currentSet._id], state.setIndex]);
-
+  const handleChangeValue = (field, operation, manualValue) => {
+    switch (operation) {
+      case "add":
+        dispatch({
+          type: "CHANGE_SET_VALUE",
+          [field]: field === "weight" ? currentSet.weight + 5 : currentSet.reps + 1
+        });
+      case "subtract":
+        dispatch({
+          type: "CHANGE_SET_VALUE",
+          [field]: field === "weight" ? currentSet.weight - 5 : currentSet.reps + 1
+        })
+      case "manual":
+        dispatch({
+          type: "CHANGE_SET_VALUE",
+          [field]: manualValue
+        })
+      default:
+        return;
+    }
+  }
+  
   return (
     <>
       <View className="mt-2">
@@ -203,14 +271,27 @@ const InProgressWorkoutPage = () => {
         </View>
         <SetTypeIndicator type={currentSet.type} />
       </View>
+      <View className="mt-6">
+        <Counter
+          field="weight"
+          value={currentSet.weight}
+          handleChangeValue={handleChangeValue}
+        />
+        <Counter
+          field="reps"
+          value={currentSet.reps}
+          handleChangeValue={handleChangeValue}
+          containerStyles="mt-4"
+        />
+      </View>
       <View className="flex-row justify-between mt-8">
-        <CustomButton 
+        <CustomButton
           title="Previous Set"
           style="secondary"
           handlePress={() => dispatch({ type: "PREVIOUS_SET" })}
           containerStyles="flex-[0.4]"
         />
-        <CustomButton 
+        <CustomButton
           title="Next Set"
           style="primary"
           handlePress={() => dispatch({ type: "NEXT_SET" })}
