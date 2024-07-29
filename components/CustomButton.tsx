@@ -4,7 +4,7 @@ import React from "react";
 interface CustomButtonProps {
   title: string;
   style: "primary" | "secondary";
-  handlePress: () => void;
+  handlePress?: () => void;
   containerStyles?: string;
   textStyles?: string;
   disabled?: boolean;

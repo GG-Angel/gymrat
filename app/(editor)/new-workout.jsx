@@ -17,7 +17,7 @@ import React, {
 import { SafeAreaView } from "react-native-safe-area-context";
 import Divider from "../../components/Divider";
 import FormField from "../../components/FormField";
-import { icons } from "../../constants";
+import { Icons } from "../../constants";
 import ExerciseBrowser from "../../components/ExerciseBrowser";
 import {
   KeyboardAwareFlatList,
@@ -425,7 +425,7 @@ const EditorCard = ({ exercise }) => {
               />
             </View>
             <View className="w-[34px] h-[34px] flex justify-center items-center">
-              {isExpanded ? <icons.collapse /> : <icons.expand />}
+              {isExpanded ? <Icons.collapse /> : <Icons.expand />}
             </View>
           </View>
         </CardContainer>
@@ -458,7 +458,7 @@ const EditorCard = ({ exercise }) => {
             )}
           />
           <View className="flex-row justify-end items-center space-x-2 my-4">
-            <icons.rest />
+            <Icons.rest />
             <Text className="text-secondary font-gsemibold text-cbody">
               Rest Time
             </Text>
@@ -482,7 +482,7 @@ const EditorCard = ({ exercise }) => {
               className="w-[38px] h-[38px] flex justify-center items-center"
               onPress={handleDeleteExercise}
             >
-              <icons.trash />
+              <Icons.trash />
             </TouchableOpacity>
             <View className="flex-row">
               <CustomButton
@@ -549,7 +549,7 @@ const Editor = () => {
               Edit Details
             </Text>
             <FormField
-              Icon={icons.edit}
+              Icon={Icons.edit}
               iconSize={15}
               iconInsideField
               value={form.workout.name}
@@ -577,7 +577,7 @@ const Editor = () => {
           onPress={() => router.back()}
           disabled={isSubmitting}
         >
-          <icons.close />
+          <Icons.close />
           <Text className="text-white font-gbold text-csub">Cancel</Text>
         </TouchableOpacity>
         <TouchableOpacity
@@ -585,7 +585,7 @@ const Editor = () => {
           onPress={handleSubmit}
           disabled={isSubmitting}
         >
-          <icons.checkmark />
+          <Icons.checkmark />
           <Text className="text-white font-gbold text-csub">Confirm</Text>
         </TouchableOpacity>
       </View>

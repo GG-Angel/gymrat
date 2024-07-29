@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import FormField from "../../components/FormField";
 
-import { icons } from "../../constants";
+import { Icons } from "../../constants";
 import CustomButton from "../../components/CustomButton";
 import { Link, router } from "expo-router";
 
@@ -34,7 +34,7 @@ const SignUp = () => {
             <View className="w-full flex-row justify-between">
               <Text className="text-secondary font-gbold text-ch1">Sign Up</Text>
               <View className="w-10 h-10 flex justify-center items-center">
-                <icons.dumbbell width={33.29} height={33.31} />
+                <Icons.dumbbell width={33.29} height={33.31} />
               </View>
             </View>
             <View className="w-full my-6">

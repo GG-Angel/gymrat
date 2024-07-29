@@ -2,7 +2,7 @@ import { View, Text } from 'react-native'
 import React from 'react'
 import { SvgProps } from "react-native-svg";
 
-import { icons } from "../../constants"
+import { Icons } from "../../constants"
 import { Tabs } from 'expo-router'
 import { StatusBar } from 'expo-status-bar'
 
@@ -47,7 +47,7 @@ const TabsLayout = () => {
             headerShown: false,
             tabBarIcon: ({ color }) => (
               <TabIcon 
-                Icon={icons.tabHome}
+                Icon={Icons.tabHome}
                 iconSize={24.53}
                 color={color}
               />
@@ -61,7 +61,7 @@ const TabsLayout = () => {
             headerShown: false,
             tabBarIcon: ({ color }) => (
               <TabIcon 
-                Icon={icons.tabStats}
+                Icon={Icons.tabStats}
                 iconSize={24.53}
                 color={color}
               />
@@ -75,7 +75,7 @@ const TabsLayout = () => {
             headerShown: false,
             tabBarIcon: ({ color }) => (
               <TabIcon 
-                Icon={icons.tabGoals}
+                Icon={Icons.tabGoals}
                 iconSize={24.53}
                 color={color}
               />
@@ -89,7 +89,7 @@ const TabsLayout = () => {
             headerShown: false,
             tabBarIcon: ({ color }) => (
               <TabIcon 
-                Icon={icons.tabProfile}
+                Icon={Icons.tabProfile}
                 iconSize={24.53}
                 color={color}
               />

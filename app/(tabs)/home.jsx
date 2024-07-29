@@ -12,7 +12,7 @@ import React, {
 } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import { Icons, icons } from "../../constants";
+import { Icons } from "../../constants";
 
 import PFP from "../../assets/images/pfp.png";
 
@@ -191,7 +191,7 @@ const FilterBar = () => {
             onPress={() => dispatch({ type: "CLEAR_FILTERS" })}
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           >
-            <icons.clear />
+            <Icons.clear />
           </TouchableOpacity>
         </View>
       ) }
@@ -230,7 +230,7 @@ const WorkoutCard = ({ workout }) => {
             scrollEnabled={false}
           />
         </View>
-        <icons.forward />
+        <Icons.forward />
       </CardContainer>
     </TouchableOpacity>
   );
@@ -258,7 +258,7 @@ const HomePage = () => {
             onPress={() => router.push("/new-workout")}
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           >
-            <icons.add />
+            <Icons.add />
           </TouchableOpacity>
         </View>
         <FilterBar />

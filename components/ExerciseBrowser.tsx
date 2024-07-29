@@ -9,19 +9,31 @@ import {
   Alert,
 } from "react-native";
 import React, { useEffect, useState } from "react";
-import { icons } from "../constants";
+import { Icons } from "../constants";
 import { useSQLiteContext } from "expo-sqlite";
-import { generateUUID } from "@/database/database";
+import { FetchedMasterExercise, generateUUID } from "@/database/database";
 
-const ExerciseBrowser = ({ handleSubmit, containerStyles }) => {
+type SubmitProps = {
+  _id: string;
+  master_id?: string;
+  name: string;
+  tags: string;
+}
+
+interface ExerciseBrowserProps {
+  handleSubmit: (exercise: SubmitProps) => void;
+  containerStyles?: string;
+}
+
+const ExerciseBrowser = ({ handleSubmit, containerStyles }: ExerciseBrowserProps) => {
   const db = useSQLiteContext();
-  const [searchQuery, setSearchQuery] = useState("");
-  const [searchResults, setSearchResults] = useState([]);
-  const [focused, setFocused] = useState(false);
+  const [searchQuery, setSearchQuery] = useState<string>("");
+  const [searchResults, setSearchResults] = useState<FetchedMasterExercise[]>([]);
+  const [focused, setFocused] = useState<boolean>(false);
 
   useEffect(() => {
     async function fetchExercises() {
-      const result = await db.getAllAsync(
+      const result: FetchedMasterExercise[] = await db.getAllAsync(
         "SELECT * FROM MasterExercise WHERE name LIKE ?",
         `%${searchQuery}%`
       );
@@ -30,7 +42,7 @@ const ExerciseBrowser = ({ handleSubmit, containerStyles }) => {
     fetchExercises();
   }, [searchQuery]);
 
-  const processSelection = async (exerciseName, masterId) => {
+  const processSelection = async (exerciseName: string, masterId?: string) => {
     const trimmedName = exerciseName.trim();
     if (trimmedName.length === 0) {
       Alert.alert(
@@ -40,14 +52,20 @@ const ExerciseBrowser = ({ handleSubmit, containerStyles }) => {
       return;
     }
 
-    const exerciseMuscles = masterId 
-      ? (await db.getFirstAsync("SELECT muscles FROM MasterExercise WHERE _id = ?", masterId)).muscles 
-      : "";
+    let exerciseMuscles = "";
+    if (masterId) {
+      const fetchMasterMuscles = await db.getFirstAsync<{ muscles: string }>(
+        "SELECT muscles FROM MasterExercise WHERE _id = ?", 
+        masterId
+      );
+      exerciseMuscles = fetchMasterMuscles?.muscles || "";
+    }
+
     handleSubmit({
       _id: generateUUID(),
-      master_id: masterId, // will be null if exercise is custom
+      master_id: masterId,  // empty if custom
       name: exerciseName,
-      tags: exerciseMuscles // will be null if exercise is custom
+      tags: exerciseMuscles // empty if custom
     });
     setSearchQuery("");
     setFocused(false);
@@ -66,7 +84,7 @@ const ExerciseBrowser = ({ handleSubmit, containerStyles }) => {
             : "rounded-lg border-none"
         }`}
       >
-        <icons.search width={14} height={14} />
+        <Icons.search width={14} height={14} />
         <TextInput
           className="flex-1 text-secondary font-gregular text-[14px]"
           value={searchQuery}
@@ -80,11 +98,11 @@ const ExerciseBrowser = ({ handleSubmit, containerStyles }) => {
         />
       </View>
       {(searchQuery || focused) && (
-        <FlatList
+        <FlatList<FetchedMasterExercise>
           className="px-4 py-3 bg-white rounded-b-lg"
           data={searchResults}
           keyboardShouldPersistTaps="always"
-          keyExtractor={(item) => item._id}
+          keyExtractor={(exercise) => exercise._id}
           renderItem={({ item: exercise, index }) => (
             <TouchableOpacity
               className={`flex-row space-x-2 items-center justify-between bg-white ${
@@ -92,11 +110,11 @@ const ExerciseBrowser = ({ handleSubmit, containerStyles }) => {
               }`}
               onPress={() => processSelection(exercise.name, exercise._id)}
             >
-              <icons.dumbbell width={14} height={14} />
+              <Icons.dumbbell width={14} height={14} />
               <Text className="flex-1 text-gray font-gregular text-body">
                 {exercise.name}
               </Text>
-              <icons.forwardSelf width={7.05} height={12} />
+              <Icons.forwardSelf width={7.05} height={12} />
             </TouchableOpacity>
           )}
           ItemSeparatorComponent={() => <View className="h-2 bg-white"></View>}
@@ -108,7 +126,7 @@ const ExerciseBrowser = ({ handleSubmit, containerStyles }) => {
               <Text className="text-gray font-gregular text-body">
                 Add as custom exercise
               </Text>
-              <icons.forwardSelf width={7.05} height={12} />
+              <Icons.forwardSelf width={7.05} height={12} />
             </TouchableOpacity>
           )}
         />

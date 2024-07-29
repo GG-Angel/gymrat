@@ -1,8 +1,21 @@
-import { View, Text, TextInput, Image, TouchableOpacity } from "react-native";
+import { View, Text, TextInput, TouchableOpacity, TextInputProps } from "react-native";
 import React, { useState } from "react";
 
 import Eye from "../assets/icons/eye.svg";
 import EyeHide from "../assets/icons/eyeHide.svg";
+import { SvgProps } from "react-native-svg";
+
+interface FormFieldProps {
+  Icon: React.FC<SvgProps>;
+  iconSize: number;
+  iconInsideField?: boolean;
+  title: string;
+  value?: string;
+  placeholder?: string;
+  handleChangeText: (newValue: string) => void;
+  containerStyles?: string;
+  autoComplete?: TextInputProps["autoComplete"];
+}
 
 const FormField = ({
   Icon,
@@ -14,26 +27,27 @@ const FormField = ({
   handleChangeText,
   containerStyles,
   autoComplete,
-  ...props
-}) => {
-  const [showPassword, setShowPassword] = useState(false);
-  const [localValue, setLocalValue] = useState(value);
+}: FormFieldProps) => {
+  const [showPassword, setShowPassword] = useState<boolean>(false);
+  const [localValue, setLocalValue] = useState<string>(value || "");
 
   return (
     <View className={`${title && "gap-y-2"} ${containerStyles}`}>
-      { title && (
+      {title && (
         <View className="flex-row items-center gap-x-2">
-          {(Icon && !iconInsideField) && (
+          {Icon && !iconInsideField && (
             <View className="w-[15px] h-[15px] flex items-center justify-center">
               <Icon width={iconSize} height={iconSize} />
             </View>
           )}
-          <Text className="text-csub font-gsemibold text-secondary">{title}</Text>
+          <Text className="text-csub font-gsemibold text-secondary">
+            {title}
+          </Text>
         </View>
-      ) }
-      
+      )}
+
       <View className="flex-row w-full py-3 px-4 space-x-3 items-center bg-white rounded-lg">
-        {(Icon && iconInsideField) && (
+        {Icon && iconInsideField && (
           <View className="w-[15px] h-[15px] flex items-center justify-center">
             <Icon width={iconSize} height={iconSize} />
           </View>
@@ -46,8 +60,13 @@ const FormField = ({
           onChangeText={(v) => setLocalValue(v)}
           onBlur={() => handleChangeText(localValue)}
           secureTextEntry={title === "Password" && !showPassword}
-          autoComplete={autoComplete | "off"}
-          hitSlop={{ top: 16, bottom: 16, left: iconInsideField ? 48 : 24, right: 24 }}
+          autoComplete={autoComplete || "off"}
+          hitSlop={{
+            top: 16,
+            bottom: 16,
+            left: iconInsideField ? 48 : 24,
+            right: 24,
+          }}
         />
         {title === "Password" && (
           <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>

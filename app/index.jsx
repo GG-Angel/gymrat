@@ -4,7 +4,7 @@ import CustomButton from "../components/CustomButton";
 import { SafeAreaView } from "react-native-safe-area-context";
 import FormField from "../components/FormField";
 
-import { icons } from "../constants";
+import { Icons } from "../constants";
 import { router } from "expo-router";
 
 export default function App() {
@@ -21,7 +21,7 @@ export default function App() {
           />
           <FormField
             title="Example Form"
-            Icon={icons.dumbbell}
+            Icon={Icons.dumbbell}
             iconSize={17.48}
             placeholder="Placeholder text"
             containerStyles="mt-2"

@@ -12,5 +12,5 @@
     "**/*.ts",
     "**/*.tsx",
     ".expo/types/**/*.ts",
-    "expo-env.d.ts", "utils/format.ts", "constants/icons.js", "app/(tabs)/_layout.tsx", "app/_layout.tsx", "app/(auth)/_layout.tsx", "components/DateSelecter.jsx", "app/(editor)/new-workout.jsx", "app/(workout)/active-workout.jsx",  ]
+    "expo-env.d.ts", "utils/format.ts", "constants/icons.js", "app/(tabs)/_layout.tsx", "app/_layout.tsx", "app/(auth)/_layout.tsx", "components/DateSelecter.jsx", "app/(editor)/new-workout.jsx", "app/(workout)/active-workout.jsx", "constants/images.js", "constants/index.js",  ]
 }
