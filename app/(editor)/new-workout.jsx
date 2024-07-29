@@ -25,9 +25,10 @@ import {
 import CardContainer from "@/components/CardContainer";
 import CustomButton from "@/components/CustomButton";
 import { router } from "expo-router";
-import { generateUUID, saveNewWorkout } from "@/database/database";
+import { EditWorkout, generateUUID, saveNewWorkout } from "@/database/database";
 import { useSQLiteContext } from "expo-sqlite";
 import { splitField } from "@/utils/format";
+
 
 const WorkoutContext = createContext();
 
