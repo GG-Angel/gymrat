@@ -2,7 +2,7 @@ import { View, Text, TouchableOpacity, FlatList } from "react-native";
 import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { router, useLocalSearchParams } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { icons } from "../../constants";
+import { Icons } from "../../constants";
 import Divider from "../../components/Divider";
 import CardContainer from "../../components/CardContainer";
 import { fetchFullWorkout } from "../../database/database";
@@ -111,7 +111,7 @@ const ExerciseCard = ({ exercise }) => {
               />
             </View>
             <View className="w-[34px] h-[34px] flex justify-center items-center">
-              {isExpanded ? <icons.collapse /> : <icons.expand />}
+              {isExpanded ? <Icons.collapse /> : <Icons.expand />}
             </View>
           </View>
         </CardContainer>
@@ -161,12 +161,12 @@ const ViewWorkoutPage = () => {
       <View className="flex-row justify-between items-center space-x-2 mt-2">
         <View className="flex-row flex-1 items-center space-x-2">
           <TouchableOpacity onPress={() => router.back()}>
-            <icons.crumbtrail />
+            <Icons.crumbtrail />
           </TouchableOpacity>
           <Text className="text-secondary font-gbold text-ch1">Workout</Text>
         </View>
         <TouchableOpacity onPress={() => {}}>
-          <icons.hamburger />
+          <Icons.hamburger />
         </TouchableOpacity>
       </View>
       <Divider />
@@ -177,7 +177,7 @@ const ViewWorkoutPage = () => {
               {fullWorkout.workout.name}
             </Text>
             <TouchableOpacity onPress={() => {}}>
-              <icons.editLarge />
+              <Icons.editLarge />
             </TouchableOpacity>
           </View>
           <FlatList

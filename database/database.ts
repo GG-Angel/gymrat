@@ -12,7 +12,7 @@ interface LastInsertRowIdResult {
   "last_insert_rowid()": number;
 }
 
-interface EditWorkout {
+export interface EditWorkout {
   workout: {
     _id: string;
     name: string;
@@ -40,7 +40,7 @@ interface EditWorkout {
   };
 }
 
-interface FullWorkout {
+export interface FullWorkout {
   workout: {
     _id: string;
     name: string;
@@ -94,7 +94,7 @@ interface FetchedExerciseSet {
   reps: number | null;
 }
 
-interface FetchedMasterExercise {
+export interface FetchedMasterExercise {
   _id: string;
   name: string;
   muscles: string;

@@ -4,7 +4,7 @@ import CustomButton from "../components/CustomButton";
 import { SafeAreaView } from "react-native-safe-area-context";
 import FormField from "../components/FormField";
 
-import { icons } from "../constants";
+import { Icons } from "../constants";
 import { router } from "expo-router";
 
 export default function App() {
@@ -16,13 +16,15 @@ export default function App() {
         <View className="h-full justify-center items-center">
           <CustomButton
             title="This is a Button"
+            style="secondary"
             handlePress={() => {}}
             containerStyles="w-full"
           />
           <FormField
             title="Example Form"
-            Icon={icons.dumbbell}
+            Icon={Icons.dumbbell}
             iconSize={17.48}
+            handleChangeText={() => {}}
             placeholder="Placeholder text"
             containerStyles="mt-2"
           />
@@ -45,6 +47,7 @@ export default function App() {
 
           <CustomButton
             title="Go to Screen"
+            style="primary"
             handlePress={() => router.replace("/home")}
             containerStyles="w-full mt-10"
           />

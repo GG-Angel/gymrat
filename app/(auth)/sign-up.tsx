@@ -3,21 +3,26 @@ import React, { useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import FormField from "../../components/FormField";
 
-import { icons } from "../../constants";
+import { Icons } from "../../constants";
 import CustomButton from "../../components/CustomButton";
 import { Link, router } from "expo-router";
 
-const LogIn = () => {
-  const [form, setForm] = useState({
+type FormState = {
+  username: string;
+  email: string;
+  password: string;
+}
+
+const SignUp = () => {
+  const [form, setForm] = useState<FormState>({
+    username: "",
     email: "",
     password: ""
   })
 
-  console.log(form);
-
   const handleSubmit = () => {
-    router.replace("/home");
-  };
+    router.replace("/home")
+  }
 
   return (
     <SafeAreaView className="bg-white-100 h-full">
@@ -31,17 +36,25 @@ const LogIn = () => {
         >
           <View className="flex-1 justify-center items-center">
             <View className="w-full flex-row justify-between">
-              <Text className="text-secondary font-gbold text-ch1">Log In</Text>
+              <Text className="text-secondary font-gbold text-ch1">Sign Up</Text>
               <View className="w-10 h-10 flex justify-center items-center">
-                <icons.dumbbell width={33.29} height={33.31} />
+                <Icons.dumbbell width={33.29} height={33.31} />
               </View>
             </View>
             <View className="w-full my-6">
               <FormField 
-                title="Email" 
-                placeholder="Enter email" 
+                title="Username" 
+                placeholder="Enter username" 
+                value={form.username}
+                handleChangeText={(u) => setForm({ ...form, username: u })}
+                autoComplete="username"
+              />
+              <FormField
+                title="Email"
+                placeholder="Enter email"
                 value={form.email}
                 handleChangeText={(e) => setForm({ ...form, email: e })}
+                containerStyles="mt-4"
                 autoComplete="email"
               />
               <FormField
@@ -50,23 +63,24 @@ const LogIn = () => {
                 value={form.password}
                 handleChangeText={(p) => setForm({ ...form, password: p })}
                 containerStyles="mt-4"
-                autoComplete="current-password"
+                autoComplete="new-password"
               />
             </View>
             <CustomButton
-              title="Sign In"
+              title="Sign Up"
+              style="primary"
               handlePress={handleSubmit}
               containerStyles="w-full"
             />
             <View className="justify-center mt-4 flex-row gap-x-1">
               <Text className="text-secondary font-gsemibold text-body">
-                Don't have an account?
+                Have an account?
               </Text>
               <Link
-                href="/sign-up"
+                href="/log-in"
                 className="text-primary font-gsemibold text-body"
               >
-                Sign Up
+                Log In
               </Link>
             </View>
           </View>
@@ -76,4 +90,4 @@ const LogIn = () => {
   );
 };
 
-export default LogIn;
+export default SignUp;

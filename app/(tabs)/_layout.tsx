@@ -1,17 +1,24 @@
 import { View, Text } from 'react-native'
 import React from 'react'
+import { SvgProps } from "react-native-svg";
 
-import { icons } from "../../constants"
+import { Icons } from "../../constants"
 import { Tabs } from 'expo-router'
 import { StatusBar } from 'expo-status-bar'
 
-const TabIcon = ({ Icon, iconSize, color }) => {
+interface TabIconProps {
+  Icon: React.FC<SvgProps>;
+  iconSize: number;
+  color: string;
+}
+
+const TabIcon = ({ Icon, iconSize, color }: TabIconProps) => {  
   return (
     <View className="w-8 h-8 flex justify-center items-center">
       <Icon 
         width={iconSize}
         height={iconSize}
-        style={{ color: color }}
+        color={color}
       />
     </View>
   )
@@ -40,7 +47,7 @@ const TabsLayout = () => {
             headerShown: false,
             tabBarIcon: ({ color }) => (
               <TabIcon 
-                Icon={icons.tabHome}
+                Icon={Icons.tabHome}
                 iconSize={24.53}
                 color={color}
               />
@@ -54,7 +61,7 @@ const TabsLayout = () => {
             headerShown: false,
             tabBarIcon: ({ color }) => (
               <TabIcon 
-                Icon={icons.tabStats}
+                Icon={Icons.tabStats}
                 iconSize={24.53}
                 color={color}
               />
@@ -68,7 +75,7 @@ const TabsLayout = () => {
             headerShown: false,
             tabBarIcon: ({ color }) => (
               <TabIcon 
-                Icon={icons.tabGoals}
+                Icon={Icons.tabGoals}
                 iconSize={24.53}
                 color={color}
               />
@@ -82,7 +89,7 @@ const TabsLayout = () => {
             headerShown: false,
             tabBarIcon: ({ color }) => (
               <TabIcon 
-                Icon={icons.tabProfile}
+                Icon={Icons.tabProfile}
                 iconSize={24.53}
                 color={color}
               />
@@ -95,4 +102,4 @@ const TabsLayout = () => {
   )
 }
 
-export default TabsLayout
+export default TabsLayout;
