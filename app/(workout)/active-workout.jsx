@@ -90,7 +90,18 @@ const WorkoutProvider = ({ children }) => {
     ...fullWorkout,
     exerciseIndex: 0, // corresponds to workout.exerciseIds index
     setIndex: 0,      // corresponds to exercise.setIds index
+    workoutLength: calculateWorkoutLength() // calculates the number of sets in the workout
   });
+
+  function calculateWorkoutLength() {
+    const exercises = [];
+    fullWorkout.workout.exerciseIds.forEach((exerciseId) => {
+      exercises.push(fullWorkout.exercises[exerciseId]);
+    });
+    const setLengths = exercises.map((e) => e.setIds.length);
+    const workoutLength = setLengths.reduce((acc, value) => acc + value, 0);
+    return workoutLength;
+  }
 
   function getCurrentExercise() {
     return state.exercises[
@@ -156,7 +167,7 @@ const InProgressWorkoutPage = () => {
           {state.workout.name}
         </Text>
         <Text className="text-secondary font-gbold text-ch1">
-          {currentExercise.name}
+          {currentExercise.name} {state.workoutLength}
         </Text>
       </View>
       <View className="flex flex-row items-center mt-2">
