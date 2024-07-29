@@ -8,8 +8,10 @@ import React, {
   useRef,
   useState,
 } from "react";
-import { useLocalSearchParams } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
+import Icons from "@/constants/icons";
+import CustomButton from "@/components/CustomButton";
 
 const WorkoutContext = createContext();
 
@@ -26,8 +28,7 @@ function workoutReducer(state, action) {
         } else {
           // go to previous exercise
           const prevExerciseIndex = state.exerciseIndex - 1;
-          const prevExerciseId =
-            state.workout.exerciseIds[prevExerciseIndex];
+          const prevExerciseId = state.workout.exerciseIds[prevExerciseIndex];
           const prevExercise = state.exercises[prevExerciseId];
           const prevSetIndex = prevExercise.setIds.length - 1;
 
@@ -35,6 +36,7 @@ function workoutReducer(state, action) {
             ...state,
             exerciseIndex: prevExerciseIndex,
             setIndex: prevSetIndex,
+            elapsedSets: state.elapsedSets - 1
           };
         }
       } else {
@@ -42,12 +44,12 @@ function workoutReducer(state, action) {
         return {
           ...state,
           setIndex: state.setIndex - 1,
+          elapsedSets: state.elapsedSets - 1
         };
       }
 
     case "NEXT_SET":
-      const currentExerciseId =
-        state.workout.exerciseIds[state.exerciseIndex];
+      const currentExerciseId = state.workout.exerciseIds[state.exerciseIndex];
       const currentExercise = state.exercises[currentExerciseId];
 
       const isLastExercise =
@@ -61,6 +63,7 @@ function workoutReducer(state, action) {
             ...state,
             exerciseIndex: 0,
             setIndex: 0,
+            elapsedSets: 0
           };
         } else {
           // go to next exercise
@@ -68,6 +71,7 @@ function workoutReducer(state, action) {
             ...state,
             exerciseIndex: state.exerciseIndex + 1,
             setIndex: 0,
+            elapsedSets: state.elapsedSets + 1
           };
         }
       } else {
@@ -75,6 +79,7 @@ function workoutReducer(state, action) {
         return {
           ...state,
           setIndex: state.setIndex + 1,
+          elapsedSets: state.elapsedSets + 1
         };
       }
     default:
@@ -89,24 +94,20 @@ const WorkoutProvider = ({ children }) => {
   const [state, dispatch] = useReducer(workoutReducer, {
     ...fullWorkout,
     exerciseIndex: 0, // corresponds to workout.exerciseIds index
-    setIndex: 0,      // corresponds to exercise.setIds index
-    workoutLength: calculateWorkoutLength() // calculates the number of sets in the workout
+    setIndex: 0, // corresponds to exercise.setIds index
+    elapsedSets: 0,
+    workoutLength: calculateWorkoutLength(), // calculates the number of total sets in the workout
   });
 
   function calculateWorkoutLength() {
-    const exercises = [];
-    fullWorkout.workout.exerciseIds.forEach((exerciseId) => {
-      exercises.push(fullWorkout.exercises[exerciseId]);
-    });
-    const setLengths = exercises.map((e) => e.setIds.length);
-    const workoutLength = setLengths.reduce((acc, value) => acc + value, 0);
-    return workoutLength;
+    return fullWorkout.workout.exerciseIds.reduce((totalSets, exerciseId) => {
+      const exercise = fullWorkout.exercises[exerciseId];
+      return totalSets + exercise.setIds.length;
+    }, 0);
   }
 
   function getCurrentExercise() {
-    return state.exercises[
-      state.workout.exerciseIds[state.exerciseIndex]
-    ];
+    return state.exercises[state.workout.exerciseIds[state.exerciseIndex]];
   }
 
   function getCurrentSet() {
@@ -128,6 +129,22 @@ const WorkoutProvider = ({ children }) => {
     </WorkoutContext.Provider>
   );
 };
+
+const ProgressBar = () => {
+  const { state } = useContext(WorkoutContext);
+  const [progress, setProgress] = useState(0);
+
+  useEffect(() => {
+    setProgress(state.elapsedSets / state.workoutLength);
+  }, [state.elapsedSets]);
+
+  return (
+    <View className="flex-row items-center">
+      <View className={`bg-primary h-1.5 rounded-md ${progress < 1 && "rounded-r-none"}`} style={{ flex: progress }}></View>
+      <View className={`bg-gray-200 h-1.5 rounded-md ${progress > 0 && "rounded-l-none"}`} style={{ flex: 1 - progress }}></View>
+    </View>
+  )
+}
 
 const SetTypeIndicator = ({ type }) => {
   const colors = useRef({
@@ -163,11 +180,19 @@ const InProgressWorkoutPage = () => {
   return (
     <>
       <View className="mt-2">
-        <Text className="text-gray font-gregular text-csub">
+        <View className="flex flex-row items-center space-x-2">
+          <TouchableOpacity onPress={() => router.back()}>
+            <Icons.exitWorkout />
+          </TouchableOpacity>
+          <View className="flex-1">
+            <ProgressBar />
+          </View>
+        </View>
+        <Text className="text-gray font-gregular text-csub mt-4">
           {state.workout.name}
         </Text>
         <Text className="text-secondary font-gbold text-ch1">
-          {currentExercise.name} {state.workoutLength}
+          {currentExercise.name}
         </Text>
       </View>
       <View className="flex flex-row items-center mt-2">
@@ -178,15 +203,20 @@ const InProgressWorkoutPage = () => {
         </View>
         <SetTypeIndicator type={currentSet.type} />
       </View>
-
-      {/* <View className="flex-row justify-between mt-8">
-        <TouchableOpacity onPress={() => dispatch({ type: "PREVIOUS_SET" })}>
-          <Text>Previous</Text>
-        </TouchableOpacity>
-        <TouchableOpacity onPress={() => dispatch({ type: "NEXT_SET" })}>
-          <Text>Next</Text>
-        </TouchableOpacity>
-      </View> */}
+      <View className="flex-row justify-between mt-8">
+        <CustomButton 
+          title="Previous Set"
+          style="secondary"
+          handlePress={() => dispatch({ type: "PREVIOUS_SET" })}
+          containerStyles="flex-[0.4]"
+        />
+        <CustomButton 
+          title="Next Set"
+          style="primary"
+          handlePress={() => dispatch({ type: "NEXT_SET" })}
+          containerStyles="flex-[0.4]"
+        />
+      </View>
     </>
   );
 };

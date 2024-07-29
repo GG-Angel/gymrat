@@ -30,6 +30,7 @@ import rest from "../assets/icons/rest.svg";
 import clear from "../assets/icons/clear.svg";
 import crumbtrail from "../assets/icons/crumbtrail.svg";
 import hamburger from "../assets/icons/hamburger.svg";
+import exitWorkout from "../assets/icons/exitWorkout.svg";
 
 export default {
   calculator,
@@ -64,4 +65,5 @@ export default {
   clear,
   crumbtrail,
   hamburger,
+  exitWorkout
 };
