@@ -1,12 +1,4 @@
 import { View, Text, Image, FlatList, TouchableOpacity } from "react-native";
-import {
-  View,
-  Text,
-  Image,
-  FlatList,
-  TouchableOpacity,
-  ListRenderItemInfo,
-} from "react-native";
 import React, {
   useCallback,
   useEffect,
@@ -17,12 +9,12 @@ import React, {
   useReducer,
   useMemo,
   useContext,
+  Dispatch,
+  PropsWithChildren,
 } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { Icons } from "../../constants";
-
-import PFP from "../../assets/images/pfp.png";
 
 import Divider from "../../components/Divider";
 import CardContainer from "../../components/CardContainer";
@@ -71,7 +63,7 @@ type ReducerAction =
 
 const HomeContext = createContext<HomeContextValues>({} as HomeContextValues);
 
-function homeReducer(state, action) {
+function homeReducer(state: HomeState, action: ReducerAction) {
   switch (action.type) {
     case "SET_WORKOUTS":
       return {
@@ -182,21 +174,21 @@ const HomeProvider: React.FC<PropsWithChildren> = ({ children }) => {
   );
 };
 
-const TodaysWorkout = ({ workout }) => {
-  return (
-    <CardContainer>
+// const TodaysWorkout = ({ workout }) => {
+//   return (
+//     <CardContainer>
 
-    </CardContainer>
-  )
-}
+//     </CardContainer>
+//   )
+// }
 
-const RecommendedWorkouts = () => {
-  return (
-    <>
-      <TodaysWorkout />
-    </>
-  )
-}
+// const RecommendedWorkouts = () => {
+//   return (
+//     <>
+//       <TodaysWorkout />
+//     </>
+//   )
+// }
 
 const FilterBar: React.FC = () => {
   const { state, dispatch } = useContext(HomeContext);
@@ -258,7 +250,7 @@ const FilterBar: React.FC = () => {
   );
 };
 
-const WorkoutCard = ({ workout }) => {
+const WorkoutCard: React.FC<{ workout: FormattedWorkout }> = ({ workout }) => {
   const { state } = useContext(HomeContext);
   return (
     <TouchableOpacity
@@ -315,7 +307,7 @@ const HomePage = () => {
         <Text className="text-gray font-gregular text-csub mb-3">
           Recommended Workouts
         </Text>
-        <RecommendedWorkouts />
+        {/* <RecommendedWorkouts /> */}
       </View>
       <View className="mt-6">
         <View className="flex-row justify-between items-center">

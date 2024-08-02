@@ -69,7 +69,7 @@ export interface FullWorkout {
   };
 }
 
-interface FetchedWorkout {
+export interface FetchedWorkout {
   _id: string;
   name: string;
   days: string;
