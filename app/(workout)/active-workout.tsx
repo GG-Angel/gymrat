@@ -7,6 +7,7 @@ import {
 } from "react-native";
 import React, {
   createContext,
+  PropsWithChildren,
   useContext,
   useEffect,
   useMemo,
@@ -20,10 +21,64 @@ import Icons from "@/constants/icons";
 import CustomButton from "@/components/CustomButton";
 import CardContainer from "@/components/CardContainer";
 import { parseDecimal, parseWhole } from "@/utils/format";
+import { FullWorkout } from "@/database/database";
 
-const WorkoutContext = createContext();
+interface WorkoutState extends FullWorkout {
+  exerciseIndex: number;
+  setIndex: number;
+  elapsedSets: number;
+  workoutLength: number;
+}
 
-function workoutReducer(state, action) {
+interface WorkoutContextValues {
+  state: WorkoutState;
+  dispatch: React.Dispatch<ReducerAction>;
+  currentExercise: CurrentExercise;
+  currentSet: CurrentSet;
+  setTypeColorsRef: React.MutableRefObject<SetTypeColors>;
+}
+
+type ReducerAction =
+  | {
+      type: "NEXT_SET" | "PREVIOUS_SET";
+    }
+  | {
+      type: "CHANGE_SET_VALUE";
+      setId: string;
+      field: "weight" | "reps";
+      weight?: number;
+      reps?: number;
+    };
+
+type CurrentExercise = {
+  _id: string;
+  master_id: string | null;
+  name: string;
+  rest: number;
+  notes: string;
+  tags: string[];
+  setIds: string[];
+};
+
+type CurrentSet = {
+  _id: string;
+  type: "Standard" | "Warm-up" | "Drop" | "Failure";
+  weight: number | null;
+  reps: number | null;
+};
+
+type SetTypeColors = {
+  Standard: string;
+  "Warm-up": string;
+  Drop: string;
+  Failure: string;
+};
+
+type SetTypes = "Standard" | "Warm-up" | "Drop" | "Failure";
+
+const WorkoutContext = createContext<WorkoutContextValues>({} as WorkoutContextValues);
+
+function workoutReducer(state: WorkoutState, action: ReducerAction) {
   switch (action.type) {
     case "PREVIOUS_SET":
       const isFirstExercise = state.exerciseIndex === 0;
@@ -99,7 +154,8 @@ function workoutReducer(state, action) {
           ...state.sets,
           [action.setId]: {
             ...state.sets[action.setId],
-            [action.field]: action[action.field],
+            [action.field]:
+              action.field === "weight" ? action.weight : action.reps,
           },
         },
       };
@@ -108,9 +164,9 @@ function workoutReducer(state, action) {
   }
 }
 
-const WorkoutProvider = ({ children }) => {
+const WorkoutProvider: React.FC<PropsWithChildren> = ({ children }) => {
   const params = useLocalSearchParams();
-  const fullWorkout = JSON.parse(params.jsonWorkout);
+  const fullWorkout: FullWorkout = JSON.parse(params.jsonWorkout as string);
 
   const [state, dispatch] = useReducer(workoutReducer, {
     ...fullWorkout,
@@ -120,8 +176,16 @@ const WorkoutProvider = ({ children }) => {
     workoutLength: calculateWorkoutLength(), // calculates the number of total sets in the workout
   });
 
-  const [currentExercise, setCurrentExercise] = useState(getCurrentExercise());
-  const [currentSet, setCurrentSet] = useState(getCurrentSet());
+  const [currentExercise, setCurrentExercise] =
+    useState<CurrentExercise>(getCurrentExercise());
+  const [currentSet, setCurrentSet] = useState<CurrentSet>(getCurrentSet());
+
+  const setTypeColorsRef = useRef({
+    Standard: "secondary",
+    "Warm-up": "yellow",
+    Drop: "purple",
+    Failure: "red",
+  });
 
   useEffect(() => {
     const exercise = getCurrentExercise();
@@ -133,25 +197,18 @@ const WorkoutProvider = ({ children }) => {
     setCurrentSet(set);
   }, [state.sets[currentSet._id], state.setIndex]);
 
-  const setTypeColorsRef = useRef({
-    Standard: "secondary",
-    "Warm-up": "yellow",
-    Drop: "purple",
-    Failure: "red",
-  });
-
-  function calculateWorkoutLength() {
+  function calculateWorkoutLength(): number {
     return fullWorkout.workout.exerciseIds.reduce((totalSets, exerciseId) => {
       const exercise = fullWorkout.exercises[exerciseId];
       return totalSets + exercise.setIds.length;
     }, 0);
   }
 
-  function getCurrentExercise() {
+  function getCurrentExercise(): CurrentExercise {
     return state.exercises[state.workout.exerciseIds[state.exerciseIndex]];
   }
 
-  function getCurrentSet() {
+  function getCurrentSet(): CurrentSet {
     return state.sets[getCurrentExercise().setIds[state.setIndex]];
   }
 
@@ -160,9 +217,9 @@ const WorkoutProvider = ({ children }) => {
     [state, dispatch, currentExercise, currentSet, setTypeColorsRef]
   );
 
-  useEffect(() => {
-    console.log(JSON.stringify(currentSet, null, 2));
-  }, [currentSet]);
+  // useEffect(() => {
+  //   console.log(JSON.stringify(currentSet, null, 2));
+  // }, [currentSet]);
 
   return (
     <WorkoutContext.Provider value={contextValue}>
@@ -173,7 +230,7 @@ const WorkoutProvider = ({ children }) => {
 
 const ProgressBar = () => {
   const { state } = useContext(WorkoutContext);
-  const [progress, setProgress] = useState(0);
+  const [progress, setProgress] = useState<number>(0);
 
   useEffect(() => {
     setProgress(state.elapsedSets / state.workoutLength);
@@ -193,7 +250,7 @@ const ProgressBar = () => {
   );
 };
 
-const SetTypeIndicator = ({ type }) => {
+const SetTypeIndicator: React.FC<{ type: SetTypes }> = ({ type }) => {
   const { setTypeColorsRef } = useContext(WorkoutContext);
   return (
     <View
@@ -204,7 +261,16 @@ const SetTypeIndicator = ({ type }) => {
   );
 };
 
-const Counter = ({ field, value, handleChangeValue, containerStyles }) => {
+const Counter: React.FC<{
+  field: "weight" | "reps";
+  value: number | null;
+  handleChangeValue: (
+    field: "weight" | "reps",
+    operation: "add" | "subtract" | "manual",
+    manualValue?: string
+  ) => void;
+  containerStyles?: string;
+}> = ({ field, value, handleChangeValue, containerStyles }) => {
   const [localValue, setLocalValue] = useState(value ? String(value) : "");
 
   useEffect(() => {
@@ -247,11 +313,15 @@ const Counter = ({ field, value, handleChangeValue, containerStyles }) => {
   );
 };
 
-const InProgressWorkoutPage = () => {
+const InProgressWorkoutPage: React.FC = () => {
   const { state, dispatch, currentExercise, currentSet } =
     useContext(WorkoutContext);
 
-  const handleChangeValue = (field, operation, manualValue) => {
+  const handleChangeValue = (
+    field: "weight" | "reps",
+    operation: "add" | "subtract" | "manual",
+    manualValue?: string
+  ) => {
     switch (operation) {
       case "add":
         dispatch({
@@ -259,7 +329,9 @@ const InProgressWorkoutPage = () => {
           setId: currentSet._id,
           field: field,
           [field]:
-            field === "weight" ? currentSet.weight + 5 : currentSet.reps + 1,
+            field === "weight"
+              ? (currentSet.weight ?? 0) + 5
+              : (currentSet.reps ?? 0) + 1,
         });
         break;
       case "subtract":
@@ -268,7 +340,9 @@ const InProgressWorkoutPage = () => {
           setId: currentSet._id,
           field: field,
           [field]:
-            field === "weight" ? currentSet.weight - 5 : currentSet.reps - 1,
+            field === "weight"
+              ? (currentSet.weight ?? 0) - 5
+              : (currentSet.reps ?? 0) - 1,
         });
         break;
       case "manual":
@@ -278,8 +352,8 @@ const InProgressWorkoutPage = () => {
           field: field,
           [field]:
             field === "weight"
-              ? parseDecimal(manualValue)
-              : parseWhole(manualValue),
+              ? parseDecimal(manualValue as string)
+              : parseWhole(manualValue as string),
         });
         break;
       default:
