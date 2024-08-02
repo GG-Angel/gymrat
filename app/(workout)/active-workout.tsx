@@ -21,9 +21,9 @@ import Icons from "@/constants/icons";
 import CustomButton from "@/components/CustomButton";
 import CardContainer from "@/components/CardContainer";
 import { parseDecimal, parseWhole } from "@/utils/format";
-import { FullWorkout } from "@/database/database";
+import { UsableRoutine } from "@/database/database";
 
-interface WorkoutState extends FullWorkout {
+interface WorkoutState extends UsableRoutine {
   exerciseIndex: number;
   setIndex: number;
   elapsedSets: number;
@@ -76,7 +76,9 @@ type SetTypeColors = {
 
 type SetTypes = "Standard" | "Warm-up" | "Drop" | "Failure";
 
-const WorkoutContext = createContext<WorkoutContextValues>({} as WorkoutContextValues);
+const WorkoutContext = createContext<WorkoutContextValues>(
+  {} as WorkoutContextValues
+);
 
 function workoutReducer(state: WorkoutState, action: ReducerAction) {
   switch (action.type) {
@@ -166,7 +168,7 @@ function workoutReducer(state: WorkoutState, action: ReducerAction) {
 
 const WorkoutProvider: React.FC<PropsWithChildren> = ({ children }) => {
   const params = useLocalSearchParams();
-  const fullWorkout: FullWorkout = JSON.parse(params.jsonWorkout as string);
+  const fullWorkout: UsableRoutine = JSON.parse(params.jsonWorkout as string);
 
   const [state, dispatch] = useReducer(workoutReducer, {
     ...fullWorkout,

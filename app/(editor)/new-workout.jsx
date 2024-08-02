@@ -19,16 +19,17 @@ import Divider from "../../components/Divider";
 import FormField from "../../components/FormField";
 import { Icons } from "../../constants";
 import ExerciseBrowser from "../../components/ExerciseBrowser";
-import {
-  KeyboardAwareFlatList,
-} from "react-native-keyboard-aware-scroll-view";
+import { KeyboardAwareFlatList } from "react-native-keyboard-aware-scroll-view";
 import CardContainer from "@/components/CardContainer";
 import CustomButton from "@/components/CustomButton";
 import { router } from "expo-router";
-import { EditWorkout, generateUUID, saveNewWorkout } from "@/database/database";
+import {
+  EditableRoutine,
+  generateUUID,
+  saveNewWorkout,
+} from "@/database/database";
 import { useSQLiteContext } from "expo-sqlite";
 import { splitField } from "@/utils/format";
-
 
 const WorkoutContext = createContext();
 
@@ -58,10 +59,7 @@ function workoutReducer(state, action) {
         ...state,
         workout: {
           ...state.workout,
-          exerciseIds: [
-            ...state.workout.exerciseIds, 
-            action.exercise._id
-          ],
+          exerciseIds: [...state.workout.exerciseIds, action.exercise._id],
         },
         exercises: {
           ...state.exercises,
@@ -172,19 +170,16 @@ function workoutReducer(state, action) {
 }
 
 const WorkoutProvider = ({ children }) => {
-  const [form, dispatch] = useReducer(
-    workoutReducer, 
-    {
-      workout: {
-        _id: generateUUID(),
-        name: "",
-        days: [],
-        exerciseIds: [],
-      },
-      exercises: {},
-      sets: {},
-    }
-  );
+  const [form, dispatch] = useReducer(workoutReducer, {
+    workout: {
+      _id: generateUUID(),
+      name: "",
+      days: [],
+      exerciseIds: [],
+    },
+    exercises: {},
+    sets: {},
+  });
 
   const contextValue = useMemo(() => ({ form, dispatch }), [form, dispatch]);
 
@@ -252,7 +247,7 @@ const DaySelecter = () => {
 
 const SetTypeEditor = ({ index, type, handlePress }) => {
   const styles = useRef({
-    "Standard": {
+    Standard: {
       container: "bg-white-100",
       text: "text-gray font-gregular",
     },
@@ -260,11 +255,11 @@ const SetTypeEditor = ({ index, type, handlePress }) => {
       container: "bg-yellow",
       text: "text-white font-gbold",
     },
-    "Drop": {
+    Drop: {
       container: "bg-purple",
       text: "text-white font-gbold",
     },
-    "Failure": {
+    Failure: {
       container: "bg-red",
       text: "text-white font-gbold",
     },
@@ -509,23 +504,23 @@ const EditorCard = ({ exercise }) => {
 const Editor = () => {
   const db = useSQLiteContext();
   const { form, dispatch } = useContext(WorkoutContext);
-  const [isSubmitting, setIsSubmitting] = useState(false);  
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async () => {
     setIsSubmitting(true);
 
     if (form.workout.name.trim() === "") {
-      Alert.alert("Invalid Details", "Please enter a valid workout name")
+      Alert.alert("Invalid Details", "Please enter a valid workout name");
     } else if (form.workout.exerciseIds.length === 0) {
-      Alert.alert("Invalid Details", "You must have at least one exercise")
+      Alert.alert("Invalid Details", "You must have at least one exercise");
     } else {
       await saveNewWorkout(db, form);
-      Alert.alert("Workout Saved!")
+      Alert.alert("Workout Saved!");
       router.back();
     }
 
     setIsSubmitting(false);
-  }
+  };
 
   return (
     <>
@@ -567,7 +562,9 @@ const Editor = () => {
             </Text>
             <ExerciseBrowser
               containerStyles="mt-2 mb-4"
-              handleSubmit={(exercise) => dispatch({ type: "ADD_EXERCISE", exercise: exercise })}
+              handleSubmit={(exercise) =>
+                dispatch({ type: "ADD_EXERCISE", exercise: exercise })
+              }
             />
           </View>
         )}

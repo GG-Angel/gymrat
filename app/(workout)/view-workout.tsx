@@ -18,14 +18,19 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Icons } from "../../constants";
 import Divider from "../../components/Divider";
 import CardContainer from "../../components/CardContainer";
-import { fetchFullWorkout, FullWorkout, UsableExercise, UsableSet } from "../../database/database";
+import {
+  fetchFullWorkout,
+  UsableRoutine,
+  UsableExercise,
+  UsableSet,
+} from "../../database/database";
 import { SQLiteDatabase, useSQLiteContext } from "expo-sqlite";
 import { formatRest } from "../../utils/format";
 import CustomButton from "../../components/CustomButton";
 import { MyListRenderItemInfo } from "@/utils/types";
 
 interface ViewWorkoutContextValue {
-  fullWorkout: FullWorkout | null;
+  fullWorkout: UsableRoutine | null;
 }
 
 const ViewWorkoutContext = createContext<ViewWorkoutContextValue>(
@@ -35,13 +40,13 @@ const ViewWorkoutContext = createContext<ViewWorkoutContextValue>(
 const ViewWorkoutProvider: React.FC<PropsWithChildren> = ({ children }) => {
   const db: SQLiteDatabase = useSQLiteContext();
   const params = useLocalSearchParams();
-  const [fullWorkout, setFullWorkout] = useState<FullWorkout | null>(null);
+  const [fullWorkout, setFullWorkout] = useState<UsableRoutine | null>(null);
 
   const contextValue = useMemo(() => ({ fullWorkout }), [fullWorkout]);
 
   useEffect(() => {
     const getFullWorkout = async () => {
-      const workout: FullWorkout = await fetchFullWorkout(
+      const workout: UsableRoutine = await fetchFullWorkout(
         db,
         params._id as string
       );
@@ -81,7 +86,7 @@ const setTypeStyles = {
   },
 };
 
-const ExerciseCardSet: React.FC<{ set: UsableSet; index: number; }> = ({
+const ExerciseCardSet: React.FC<{ set: UsableSet; index: number }> = ({
   set,
   index,
 }) => {
@@ -155,14 +160,17 @@ const ExerciseCard: React.FC<{ exercise: UsableExercise }> = ({ exercise }) => {
           </View>
         </CardContainer>
       </TouchableOpacity>
-      {(isExpanded && fullWorkout) && (
+      {isExpanded && fullWorkout && (
         <CardContainer containerStyles="rounded-t-none">
           <FlatList
             data={exercise.setIds}
             keyExtractor={(setId) => setId}
             renderItem={(props) => {
-              const { item: setId, index } = props as MyListRenderItemInfo<string>;
-              return <ExerciseCardSet set={fullWorkout.sets[setId]} index={index} />
+              const { item: setId, index } =
+                props as MyListRenderItemInfo<string>;
+              return (
+                <ExerciseCardSet set={fullWorkout.sets[setId]} index={index} />
+              );
             }}
             ItemSeparatorComponent={() => <View className="h-1"></View>}
             ListHeaderComponent={() => (

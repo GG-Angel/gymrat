@@ -12,41 +12,47 @@ interface LastInsertRowIdResult {
   "last_insert_rowid()": number;
 }
 
-export interface EditWorkout {
-  workout: {
-    _id: string;
-    name: string;
-    days: string[];
-    exerciseIds: string[];
-  };
+export interface EditableRoutine {
+  workout: EditableWorkout;
   exercises: {
-    [exerciseId: string]: {
-      _id: string;
-      master_id: string | null;
-      name: string;
-      rest: string;
-      notes: string;
-      tags: string;
-      setIds: string[];
-    };
+    [exerciseId: string]: EditableExercise;
   };
   sets: {
-    [setId: string]: {
-      _id: string;
-      type: "Standard" | "Warm-up" | "Drop" | "Failure";
-      weight: string | null;
-      reps: string | null;
-    };
+    [setId: string]: EditableSet;
   };
 }
 
-export interface FullWorkout {
+export type EditableWorkout = {
+  _id: string;
+  name: string;
+  days: string[];
+  exerciseIds: string[];
+};
+
+export type EditableExercise = {
+  _id: string;
+  master_id: string | null;
+  name: string;
+  rest: string;
+  notes: string;
+  tags: string;
+  setIds: string[];
+};
+
+export type EditableSet = {
+  _id: string;
+  type: "Standard" | "Warm-up" | "Drop" | "Failure";
+  weight: string | null;
+  reps: string | null;
+};
+
+export interface UsableRoutine {
   workout: UsableWorkout;
   exercises: {
     [exerciseId: string]: UsableExercise;
   };
-  sets: { 
-    [setId: string]: UsableSet 
+  sets: {
+    [setId: string]: UsableSet;
   };
 }
 
@@ -169,7 +175,7 @@ export const setupDatabase = async (db: SQLiteDatabase) => {
 
 export const saveNewWorkout = async (
   db: SQLiteDatabase,
-  form: EditWorkout
+  form: EditableRoutine
 ): Promise<void> => {
   const { workout, exercises, sets } = form;
 
@@ -545,7 +551,7 @@ const setupDummyData = async (db: SQLiteDatabase): Promise<void> => {
     generateUUID(),
   ] as string[];
 
-  const dummyWorkout: EditWorkout = {
+  const dummyWorkout: EditableRoutine = {
     workout: {
       _id: workoutId,
       name: "My Personal Workout",
@@ -619,7 +625,7 @@ const setupDummyData = async (db: SQLiteDatabase): Promise<void> => {
 export const fetchFullWorkout = async (
   db: SQLiteDatabase,
   workoutId: string
-): Promise<FullWorkout> => {
+): Promise<UsableRoutine> => {
   const workout: FetchedWorkout = (await db.getFirstAsync(
     "SELECT * FROM Workout WHERE _id = ?",
     workoutId
@@ -630,7 +636,7 @@ export const fetchFullWorkout = async (
   );
   const exerciseIds: string[] = exercises.map((e) => e._id);
 
-  const fullWorkout: FullWorkout = {
+  const fullWorkout: UsableRoutine = {
     workout: {
       _id: workout._id,
       name: workout.name,
