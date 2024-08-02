@@ -1,27 +1,50 @@
-import { View, Text, TouchableOpacity, FlatList } from "react-native";
-import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  FlatList,
+  ListRenderItemInfo,
+} from "react-native";
+import React, {
+  createContext,
+  PropsWithChildren,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import { router, useLocalSearchParams } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Icons } from "../../constants";
 import Divider from "../../components/Divider";
 import CardContainer from "../../components/CardContainer";
-import { fetchFullWorkout } from "../../database/database";
-import { useSQLiteContext } from "expo-sqlite";
+import { fetchFullWorkout, FullWorkout } from "../../database/database";
+import { SQLiteDatabase, useSQLiteContext } from "expo-sqlite";
 import { formatRest } from "../../utils/format";
 import CustomButton from "../../components/CustomButton";
+import { MyListRenderItemInfo } from "@/utils/types";
 
-const ViewWorkoutContext = createContext();
+interface ViewWorkoutContextValue {
+  fullWorkout: FullWorkout | null;
+}
 
-const ViewWorkoutProvider = ({ children }) => {
-  const db = useSQLiteContext();
+const ViewWorkoutContext = createContext<ViewWorkoutContextValue>(
+  {} as ViewWorkoutContextValue
+);
+
+const ViewWorkoutProvider: React.FC<PropsWithChildren> = ({ children }) => {
+  const db: SQLiteDatabase = useSQLiteContext();
   const params = useLocalSearchParams();
-  const [fullWorkout, setFullWorkout] = useState(null);
+  const [fullWorkout, setFullWorkout] = useState<FullWorkout | null>(null);
 
   const contextValue = useMemo(() => ({ fullWorkout }), [fullWorkout]);
 
   useEffect(() => {
     const getFullWorkout = async () => {
-      const workout = await fetchFullWorkout(db, params._id);
+      const workout: FullWorkout = await fetchFullWorkout(
+        db,
+        params._id as string
+      );
       setFullWorkout(workout);
     };
 
@@ -36,11 +59,11 @@ const ViewWorkoutProvider = ({ children }) => {
     <ViewWorkoutContext.Provider value={contextValue}>
       {children}
     </ViewWorkoutContext.Provider>
-  )
-}
+  );
+};
 
 const setTypeStyles = {
-  "Standard": {
+  Standard: {
     container: "bg-white-100",
     text: "text-gray font-gregular",
   },
@@ -48,46 +71,76 @@ const setTypeStyles = {
     container: "bg-yellow",
     text: "text-white font-gbold",
   },
-  "Drop": {
+  Drop: {
     container: "bg-purple",
     text: "text-white font-gbold",
   },
-  "Failure": {
+  Failure: {
     container: "bg-red",
     text: "text-white font-gbold",
   },
 };
 
-const ExerciseCardSet = ({ set, index }) => {
+type ExerciseSet = {
+  _id: string;
+  type: "Standard" | "Warm-up" | "Drop" | "Failure";
+  weight: number | null;
+  reps: number | null;
+}
+
+const ExerciseCardSet: React.FC<{ set: ExerciseSet; index: number; }> = ({
+  set,
+  index,
+}) => {
   return (
     <View className="flex flex-row justify-between items-center space-x-2">
-      <View className={`flex-[0.16] py-1 rounded-md ${setTypeStyles[set.type].container}`}>
-        <Text className={`text-cbody text-center ${setTypeStyles[set.type].text}`}>
+      <View
+        className={`flex-[0.16] py-1 rounded-md ${setTypeStyles[set.type].container}`}
+      >
+        <Text
+          className={`text-cbody text-center ${setTypeStyles[set.type].text}`}
+        >
           {set.type === "Standard" ? index + 1 : set.type.charAt(0)}
         </Text>
       </View>
-      <View className={`flex-[0.48] bg-white-100 py-1 rounded-md ${!set.weight && "opacity-50"}`}>
+      <View
+        className={`flex-[0.48] bg-white-100 py-1 rounded-md ${!set.weight && "opacity-50"}`}
+      >
         <Text className="text-gray font-gregular text-cbody text-center">
           {set.weight ?? "N/A"}
         </Text>
       </View>
-      <View className={`flex-[0.36] bg-white-100 py-1 rounded-md ${!set.reps && "opacity-50"}`}>
+      <View
+        className={`flex-[0.36] bg-white-100 py-1 rounded-md ${!set.reps && "opacity-50"}`}
+      >
         <Text className="text-gray font-gregular text-cbody text-center">
           {set.reps ?? "N/A"}
         </Text>
       </View>
     </View>
-  )
+  );
+};
+
+interface Exercise {
+  _id: string;
+  master_id: string | null;
+  name: string;
+  rest: number;
+  notes: string;
+  tags: string[];
+  setIds: string[];
 }
 
-const ExerciseCard = ({ exercise }) => {
+const ExerciseCard: React.FC<{ exercise: Exercise }> = ({ exercise }) => {
   const { fullWorkout } = useContext(ViewWorkoutContext);
   const [isExpanded, setIsExpanded] = useState(false);
 
   return (
     <>
       <TouchableOpacity onPress={() => setIsExpanded(!isExpanded)}>
-        <CardContainer containerStyles={`${isExpanded && "rounded-b-none border-b-[1px] border-gray-200"}`}>
+        <CardContainer
+          containerStyles={`${isExpanded && "rounded-b-none border-b-[1px] border-gray-200"}`}
+        >
           <View className="flex-row justify-between items-center space-x-6">
             <View className="flex-1">
               <Text className="text-secondary font-gbold text-csub">
@@ -100,13 +153,16 @@ const ExerciseCard = ({ exercise }) => {
                 className="flex-row flex-wrap mt-2 mb-[-4px]"
                 data={exercise.tags}
                 keyExtractor={(item) => item}
-                renderItem={({ item: tag }) => (
-                  <View className="bg-white-100 py-1 px-2.5 rounded-xl mr-1 mb-1">
-                    <Text className="text-gray font-gregular text-ctri">
-                      {tag}
-                    </Text>
-                  </View>
-                )}
+                renderItem={(props) => {
+                  const { item: tag } = props as MyListRenderItemInfo<string>;
+                  return (
+                    <View className="bg-white-100 py-1 px-2.5 rounded-xl mr-1 mb-1">
+                      <Text className="text-gray font-gregular text-ctri">
+                        {tag}
+                      </Text>
+                    </View>
+                  );
+                }}
                 scrollEnabled={false}
               />
             </View>
@@ -116,17 +172,15 @@ const ExerciseCard = ({ exercise }) => {
           </View>
         </CardContainer>
       </TouchableOpacity>
-      { isExpanded && (
+      {(isExpanded && fullWorkout) && (
         <CardContainer containerStyles="rounded-t-none">
-          <FlatList 
+          <FlatList
             data={exercise.setIds}
             keyExtractor={(setId) => setId}
-            renderItem={({ item: setId, index }) => (
-              <ExerciseCardSet 
-                set={fullWorkout.sets[setId]}
-                index={index}
-              />
-            )}
+            renderItem={(props) => {
+              const { item: setId, index } = props as MyListRenderItemInfo<string>;
+              return <ExerciseCardSet set={fullWorkout.sets[setId]} index={index} />
+            }}
             ItemSeparatorComponent={() => <View className="h-1"></View>}
             ListHeaderComponent={() => (
               <View className="flex flex-row justify-between items-center space-x-2 mb-2">
@@ -148,14 +202,14 @@ const ExerciseCard = ({ exercise }) => {
             </Text>
           </View>
         </CardContainer>
-      ) }
+      )}
     </>
   );
 };
 
 const ViewWorkoutPage = () => {
   const { fullWorkout } = useContext(ViewWorkoutContext);
-  
+
   return (
     <View className="flex-1">
       <View className="flex-row justify-between items-center space-x-2 mt-2">
@@ -184,27 +238,33 @@ const ViewWorkoutPage = () => {
             className="mt-3"
             data={fullWorkout.workout.exerciseIds}
             keyExtractor={(exerciseId) => exerciseId}
-            renderItem={({ item: exerciseId }) => (
-              <ExerciseCard exercise={fullWorkout.exercises[exerciseId]} />
-            )}
+            renderItem={(props) => {
+              const { item: exerciseId } =
+                props as MyListRenderItemInfo<string>;
+              return (
+                <ExerciseCard exercise={fullWorkout.exercises[exerciseId]} />
+              );
+            }}
             ItemSeparatorComponent={() => <View className="h-4"></View>}
             contentContainerStyle={{ paddingBottom: 200 }}
           />
         </>
       )}
       <View className="w-full absolute bottom-16 shadow-lg shadow-primary">
-        <CustomButton 
+        <CustomButton
           title="Start Workout"
-          handlePress={() => router.push({
-            pathname: "/active-workout",
-            params: { jsonWorkout: JSON.stringify(fullWorkout) } // for some reason we need to do this
-          })}
+          style="primary"
+          handlePress={() =>
+            router.push({
+              pathname: "/active-workout",
+              params: { jsonWorkout: JSON.stringify(fullWorkout) }, // for some reason we need to do this
+            })
+          }
         />
       </View>
     </View>
   );
-}
-
+};
 
 const ViewWorkout = () => {
   return (
