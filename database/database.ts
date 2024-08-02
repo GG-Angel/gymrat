@@ -41,33 +41,39 @@ export interface EditWorkout {
 }
 
 export interface FullWorkout {
-  workout: {
-    _id: string;
-    name: string;
-    days: string[];
-    tags: string[];
-    exerciseIds: string[];
-  };
+  workout: UsableWorkout;
   exercises: {
-    [exerciseId: string]: {
-      _id: string;
-      master_id: string | null;
-      name: string;
-      rest: number;
-      notes: string;
-      tags: string[];
-      setIds: string[];
-    };
+    [exerciseId: string]: UsableExercise;
   };
-  sets: {
-    [setId: string]: {
-      _id: string;
-      type: "Standard" | "Warm-up" | "Drop" | "Failure";
-      weight: number | null;
-      reps: number | null;
-    };
+  sets: { 
+    [setId: string]: UsableSet 
   };
 }
+
+export type UsableWorkout = {
+  _id: string;
+  name: string;
+  days: string[];
+  tags: string[];
+  exerciseIds: string[];
+};
+
+export type UsableExercise = {
+  _id: string;
+  master_id: string | null;
+  name: string;
+  rest: number;
+  notes: string;
+  tags: string[];
+  setIds: string[];
+};
+
+export type UsableSet = {
+  _id: string;
+  type: "Standard" | "Warm-up" | "Drop" | "Failure";
+  weight: number | null;
+  reps: number | null;
+};
 
 export interface FetchedWorkout {
   _id: string;

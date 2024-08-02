@@ -18,7 +18,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Icons } from "../../constants";
 import Divider from "../../components/Divider";
 import CardContainer from "../../components/CardContainer";
-import { fetchFullWorkout, FullWorkout } from "../../database/database";
+import { fetchFullWorkout, FullWorkout, UsableExercise, UsableSet } from "../../database/database";
 import { SQLiteDatabase, useSQLiteContext } from "expo-sqlite";
 import { formatRest } from "../../utils/format";
 import CustomButton from "../../components/CustomButton";
@@ -81,14 +81,7 @@ const setTypeStyles = {
   },
 };
 
-type ExerciseSet = {
-  _id: string;
-  type: "Standard" | "Warm-up" | "Drop" | "Failure";
-  weight: number | null;
-  reps: number | null;
-}
-
-const ExerciseCardSet: React.FC<{ set: ExerciseSet; index: number; }> = ({
+const ExerciseCardSet: React.FC<{ set: UsableSet; index: number; }> = ({
   set,
   index,
 }) => {
@@ -121,17 +114,7 @@ const ExerciseCardSet: React.FC<{ set: ExerciseSet; index: number; }> = ({
   );
 };
 
-interface Exercise {
-  _id: string;
-  master_id: string | null;
-  name: string;
-  rest: number;
-  notes: string;
-  tags: string[];
-  setIds: string[];
-}
-
-const ExerciseCard: React.FC<{ exercise: Exercise }> = ({ exercise }) => {
+const ExerciseCard: React.FC<{ exercise: UsableExercise }> = ({ exercise }) => {
   const { fullWorkout } = useContext(ViewWorkoutContext);
   const [isExpanded, setIsExpanded] = useState(false);
 
