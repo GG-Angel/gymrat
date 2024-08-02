@@ -69,14 +69,14 @@ export interface FullWorkout {
   };
 }
 
-interface FetchedWorkout {
+export interface FetchedWorkout {
   _id: string;
   name: string;
   days: string;
   tags: string;
 }
 
-interface FetchedExercise {
+export interface FetchedExercise {
   _id: string;
   workout_id: string;
   master_id: string | null;
@@ -86,7 +86,7 @@ interface FetchedExercise {
   tags: string;
 }
 
-interface FetchedExerciseSet {
+export interface FetchedExerciseSet {
   _id: string;
   exercise_id: string;
   type: "Standard" | "Warm-up" | "Drop" | "Failure";
