@@ -1,7 +1,7 @@
 import {
   formatDays,
   joinField,
-  parseRounded,
+  parseDecimal,
   parseWhole,
   splitField,
 } from "@/utils/format";
@@ -53,7 +53,7 @@ export interface FullWorkout {
       _id: string;
       master_id: string | null;
       name: string;
-      rest: string;
+      rest: number;
       notes: string;
       tags: string[];
       setIds: string[];
@@ -63,8 +63,8 @@ export interface FullWorkout {
     [setId: string]: {
       _id: string;
       type: "Standard" | "Warm-up" | "Drop" | "Failure";
-      weight: string | null;
-      reps: string | null;
+      weight: number | null;
+      reps: number | null;
     };
   };
 }
@@ -211,7 +211,7 @@ export const saveNewWorkout = async (
         setId,
         exerciseId,
         set.type,
-        set.weight ? parseRounded(set.weight) : null,
+        set.weight ? parseDecimal(set.weight) : null,
         set.reps ? parseWhole(set.reps) : null
       );
     });
@@ -636,32 +636,34 @@ export const fetchFullWorkout = async (
     sets: {},
   };
 
-  await Promise.all(exercises.map(async (exercise) => {
-    const sets: FetchedExerciseSet[] = await db.getAllAsync(
-      "SELECT * FROM ExerciseSet WHERE exercise_id = ?",
-      exercise._id
-    );
-    const setIds: string[] = sets.map((s) => s._id);
+  await Promise.all(
+    exercises.map(async (exercise) => {
+      const sets: FetchedExerciseSet[] = await db.getAllAsync(
+        "SELECT * FROM ExerciseSet WHERE exercise_id = ?",
+        exercise._id
+      );
+      const setIds: string[] = sets.map((s) => s._id);
 
-    fullWorkout.exercises[exercise._id] = {
-      _id: exercise._id,
-      master_id: exercise.master_id,
-      name: exercise.name,
-      rest: `${exercise.rest}`,
-      notes: exercise.notes,
-      tags: splitField(exercise.tags),
-      setIds: setIds,
-    };
+      fullWorkout.exercises[exercise._id] = {
+        _id: exercise._id,
+        master_id: exercise.master_id,
+        name: exercise.name,
+        rest: exercise.rest,
+        notes: exercise.notes,
+        tags: splitField(exercise.tags),
+        setIds: setIds,
+      };
 
-    sets.forEach((set) => {
-      fullWorkout.sets[set._id] = {
-        _id: set._id,
-        type: set.type,
-        weight: set.weight ? `${set.weight}` : null,
-        reps: set.reps ? `${set.reps}` : null
-      }
-    });
-  }));
+      sets.forEach((set) => {
+        fullWorkout.sets[set._id] = {
+          _id: set._id,
+          type: set.type,
+          weight: set.weight,
+          reps: set.reps,
+        };
+      });
+    })
+  );
 
   // console.log("Fetched full workout from database:", JSON.stringify(fullWorkout, null, 2));
 

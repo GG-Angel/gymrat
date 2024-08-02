@@ -323,7 +323,7 @@ const SetEditor = ({ index, set, handleEditSet }) => {
           placeholder={"N/A"}
           placeholderTextColor="#BABABA"
           onChangeText={(w) => handleEdits("weight", w)}
-          maxLength={8}
+          maxLength={7}
           hitSlop={{ top: 8, bottom: 8, left: 16, right: 16 }}
         />
       </View>
@@ -337,7 +337,7 @@ const SetEditor = ({ index, set, handleEditSet }) => {
           placeholder={"N/A"}
           placeholderTextColor="#BABABA"
           onChangeText={(r) => handleEdits("reps", r)}
-          maxLength={5}
+          maxLength={4}
           hitSlop={{ top: 8, bottom: 8, left: 16, right: 16 }}
         />
       </View>

@@ -1,4 +1,10 @@
-import { View, Text, TouchableOpacity, TextInput } from "react-native";
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  TextInput,
+  ScrollView,
+} from "react-native";
 import React, {
   createContext,
   useContext,
@@ -13,6 +19,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import Icons from "@/constants/icons";
 import CustomButton from "@/components/CustomButton";
 import CardContainer from "@/components/CardContainer";
+import { parseDecimal, parseWhole } from "@/utils/format";
 
 const WorkoutContext = createContext();
 
@@ -83,6 +90,19 @@ function workoutReducer(state, action) {
           elapsedSets: state.elapsedSets + 1,
         };
       }
+
+    case "CHANGE_SET_VALUE":
+      // console.log("ACTION:", JSON.stringify(action, null, 2));
+      return {
+        ...state,
+        sets: {
+          ...state.sets,
+          [action.setId]: {
+            ...state.sets[action.setId],
+            [action.field]: action[action.field],
+          },
+        },
+      };
     default:
       return state;
   }
@@ -141,8 +161,8 @@ const WorkoutProvider = ({ children }) => {
   );
 
   useEffect(() => {
-    console.log(JSON.stringify(state, null, 2))
-  }, [state]);
+    console.log(JSON.stringify(currentSet, null, 2));
+  }, [currentSet]);
 
   return (
     <WorkoutContext.Provider value={contextValue}>
@@ -185,9 +205,15 @@ const SetTypeIndicator = ({ type }) => {
 };
 
 const Counter = ({ field, value, handleChangeValue, containerStyles }) => {
+  const [localValue, setLocalValue] = useState(value ? String(value) : "");
+
+  useEffect(() => {
+    setLocalValue(value ? String(value) : "");
+  }, [value]);
+
   return (
     <CardContainer
-      containerStyles={`flex-row items-center justify-between ${containerStyles}`}
+      containerStyles={`flex-row items-center justify-between space-x-4 ${containerStyles}`}
     >
       <TouchableOpacity
         onPress={() => handleChangeValue(field, "subtract")}
@@ -195,15 +221,17 @@ const Counter = ({ field, value, handleChangeValue, containerStyles }) => {
       >
         <Icons.subtractCircle />
       </TouchableOpacity>
-      <View>
+      <View className="flex-1">
         <TextInput
-          className="w-full text-secondary font-gbold text-ch1 text-center"
-          value={value || ""}
+          className="flex-[0.5] text-secondary font-gbold text-ch1 text-center"
+          value={localValue}
           placeholder="N/A"
           placeholderTextColor="#6A6A6A" // 25%
-          onChangeText={(newValue) => handleChangeValue(field, "manual", newValue)}
+          onChangeText={(v) => setLocalValue(v)}
+          onBlur={() => handleChangeValue(field, "manual", localValue)}
           keyboardType="numeric"
-          maxLength={7}
+          maxLength={field === "weight" ? 7 : 4}
+          hitSlop={{ top: 12, bottom: 32 }}
         />
         <Text className="text-secondary font-gregular text-csub text-center">
           {field}
@@ -228,76 +256,90 @@ const InProgressWorkoutPage = () => {
       case "add":
         dispatch({
           type: "CHANGE_SET_VALUE",
-          [field]: field === "weight" ? currentSet.weight + 5 : currentSet.reps + 1
+          setId: currentSet._id,
+          field: field,
+          [field]:
+            field === "weight" ? currentSet.weight + 5 : currentSet.reps + 1,
         });
+        break;
       case "subtract":
         dispatch({
           type: "CHANGE_SET_VALUE",
-          [field]: field === "weight" ? currentSet.weight - 5 : currentSet.reps + 1
-        })
+          setId: currentSet._id,
+          field: field,
+          [field]:
+            field === "weight" ? currentSet.weight - 5 : currentSet.reps - 1,
+        });
+        break;
       case "manual":
         dispatch({
           type: "CHANGE_SET_VALUE",
-          [field]: manualValue
-        })
+          setId: currentSet._id,
+          field: field,
+          [field]:
+            field === "weight"
+              ? parseDecimal(manualValue)
+              : parseWhole(manualValue),
+        });
+        break;
       default:
         return;
     }
-  }
-  
+  };
+
   return (
     <>
-      <View className="mt-2">
-        <View className="flex flex-row items-center space-x-2">
-          <TouchableOpacity onPress={() => router.back()}>
-            <Icons.exitWorkout />
-          </TouchableOpacity>
-          <View className="flex-1">
-            <ProgressBar />
-          </View>
+      <View className="flex flex-row items-center space-x-2">
+        <TouchableOpacity onPress={() => router.back()}>
+          <Icons.exitWorkout />
+        </TouchableOpacity>
+        <View className="flex-1">
+          <ProgressBar />
         </View>
-        <Text className="text-gray font-gregular text-csub mt-4">
+      </View>
+      <ScrollView className="my-4">
+        <Text className="text-gray font-gregular text-csub">
           {state.workout.name}
         </Text>
         <Text className="text-secondary font-gbold text-ch1">
           {currentExercise.name}
         </Text>
-      </View>
-      <View className="flex flex-row items-center mt-2">
-        <View className="bg-primary px-2.5 py-1 rounded-xl mr-1">
-          <Text className="text-white font-gsemibold text-cbody">
-            Set {state.setIndex + 1}/{currentExercise.setIds.length}
-          </Text>
+        <View className="flex flex-row items-center mt-2">
+          <View className="bg-primary px-2.5 py-1 rounded-xl mr-1">
+            <Text className="text-white font-gsemibold text-cbody">
+              Set {state.setIndex + 1}/{currentExercise.setIds.length}
+            </Text>
+          </View>
+          <SetTypeIndicator type={currentSet.type} />
         </View>
-        <SetTypeIndicator type={currentSet.type} />
-      </View>
-      <View className="mt-6">
-        <Counter
-          field="weight"
-          value={currentSet.weight}
-          handleChangeValue={handleChangeValue}
-        />
-        <Counter
-          field="reps"
-          value={currentSet.reps}
-          handleChangeValue={handleChangeValue}
-          containerStyles="mt-4"
-        />
-      </View>
-      <View className="flex-row justify-between mt-8">
-        <CustomButton
-          title="Previous Set"
-          style="secondary"
-          handlePress={() => dispatch({ type: "PREVIOUS_SET" })}
-          containerStyles="flex-[0.4]"
-        />
-        <CustomButton
-          title="Next Set"
-          style="primary"
-          handlePress={() => dispatch({ type: "NEXT_SET" })}
-          containerStyles="flex-[0.4]"
-        />
-      </View>
+        <View className="mt-6">
+          <Counter
+            field="weight"
+            value={currentSet.weight}
+            handleChangeValue={handleChangeValue}
+          />
+          <Counter
+            field="reps"
+            value={currentSet.reps}
+            handleChangeValue={handleChangeValue}
+            containerStyles="mt-4"
+          />
+        </View>
+        <View className="flex-row justify-between mt-8">
+          <CustomButton
+            title="Previous Set"
+            style="secondary"
+            handlePress={() => dispatch({ type: "PREVIOUS_SET" })}
+            containerStyles="flex-[0.4]"
+          />
+          <CustomButton
+            title="Next Set"
+            style="primary"
+            handlePress={() => dispatch({ type: "NEXT_SET" })}
+            containerStyles="flex-[0.4]"
+          />
+        </View>
+      </ScrollView>
     </>
   );
 };
@@ -313,12 +355,3 @@ const ActiveWorkout = () => {
 };
 
 export default ActiveWorkout;
-
-{
-  /* <TouchableOpacity onPress={() => dispatch({ type: "PREVIOUS_SET" })}>
-  <Text>Previous</Text>
-</TouchableOpacity>
-<TouchableOpacity onPress={() => dispatch({ type: "NEXT_SET" })}>
-  <Text>Next</Text>
-</TouchableOpacity> */
-}
