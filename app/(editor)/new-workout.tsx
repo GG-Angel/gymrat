@@ -8,6 +8,7 @@ import {
 } from "react-native";
 import React, {
   createContext,
+  PropsWithChildren,
   useContext,
   useMemo,
   useReducer,
@@ -24,16 +25,74 @@ import CardContainer from "@/components/CardContainer";
 import CustomButton from "@/components/CustomButton";
 import { router } from "expo-router";
 import {
+  EditableExercise,
   EditableRoutine,
+  EditableSet,
   generateUUID,
   saveNewWorkout,
 } from "@/database/database";
 import { useSQLiteContext } from "expo-sqlite";
 import { splitField } from "@/utils/format";
+import { MyListRenderItemInfo } from "@/utils/types";
 
-const WorkoutContext = createContext();
+interface EditWorkoutContextValues {
+  form: EditableRoutine;
+  dispatch: React.Dispatch<ReducerAction>;
+}
 
-function workoutReducer(state, action) {
+type ReducerAction =
+  | {
+      type: "CHANGE_NAME";
+      name: string;
+    }
+  | {
+      type: "TOGGLE_DAY";
+      day:
+        | "Sunday"
+        | "Monday"
+        | "Tuesday"
+        | "Wednesday"
+        | "Thursday"
+        | "Friday"
+        | "Saturday";
+    }
+  | {
+      type: "ADD_EXERCISE";
+      exercise: {
+        _id: string;
+        master_id?: string;
+        name: string;
+        tags: string;
+      };
+    }
+  | {
+      type: "EDIT_EXERCISE";
+      exercise: EditableExercise;
+    }
+  | {
+      type: "DELETE_EXERCISE";
+      removeExerciseId: string;
+    }
+  | {
+      type: "ADD_SET";
+      newSetId: string;
+      exercise: EditableExercise;
+    }
+  | {
+      type: "EDIT_SET";
+      updatedSet: EditableSet;
+    }
+  | {
+      type: "REMOVE_SET";
+      removeSetId: string;
+      exercise: EditableExercise;
+    };
+
+const WorkoutContext = createContext<EditWorkoutContextValues>(
+  {} as EditWorkoutContextValues
+);
+
+function workoutReducer(state: EditableRoutine, action: ReducerAction) {
   switch (action.type) {
     case "CHANGE_NAME":
       return {
@@ -169,19 +228,26 @@ function workoutReducer(state, action) {
   }
 }
 
-const WorkoutProvider = ({ children }) => {
+const WorkoutProvider: React.FC<PropsWithChildren> = ({ children }) => {
   const [form, dispatch] = useReducer(workoutReducer, {
     workout: {
       _id: generateUUID(),
       name: "",
-      days: [],
-      exerciseIds: [],
+      days: [] as string[],
+      exerciseIds: [] as string[],
     },
-    exercises: {},
-    sets: {},
+    exercises: {} as {
+      [exerciseId: string]: EditableExercise;
+    },
+    sets: {} as {
+      [setId: string]: EditableSet;
+    },
   });
 
-  const contextValue = useMemo(() => ({ form, dispatch }), [form, dispatch]);
+  const contextValue: EditWorkoutContextValues = useMemo(
+    () => ({ form, dispatch }),
+    [form, dispatch]
+  );
 
   // useEffect(() => {
   //   console.log(JSON.stringify(form, null, 2));
@@ -194,7 +260,18 @@ const WorkoutProvider = ({ children }) => {
   );
 };
 
-const DayToggle = ({ day, isSelected, handleToggle }) => {
+const DayToggle: React.FC<{
+  day:
+    | "Sunday"
+    | "Monday"
+    | "Tuesday"
+    | "Wednesday"
+    | "Thursday"
+    | "Friday"
+    | "Saturday";
+  isSelected: boolean;
+  handleToggle: () => void;
+}> = ({ day, isSelected, handleToggle }) => {
   return (
     <TouchableOpacity
       onPress={handleToggle}
@@ -229,13 +306,37 @@ const DaySelecter = () => {
     <KeyboardAwareFlatList
       data={daysOfWeek.current}
       keyExtractor={(day) => day}
-      renderItem={({ item: day }) => (
-        <DayToggle
-          day={day}
-          isSelected={form.workout.days.includes(day)}
-          handleToggle={() => dispatch({ type: "TOGGLE_DAY", day })}
-        />
-      )}
+      renderItem={(props) => {
+        const { item: day } = props as MyListRenderItemInfo<string>;
+        return (
+          <DayToggle
+            day={
+              day as
+                | "Sunday"
+                | "Monday"
+                | "Tuesday"
+                | "Wednesday"
+                | "Thursday"
+                | "Friday"
+                | "Saturday"
+            }
+            isSelected={form.workout.days.includes(day)}
+            handleToggle={() =>
+              dispatch({
+                type: "TOGGLE_DAY",
+                day: day as
+                  | "Sunday"
+                  | "Monday"
+                  | "Tuesday"
+                  | "Wednesday"
+                  | "Thursday"
+                  | "Friday"
+                  | "Saturday",
+              })
+            }
+          />
+        );
+      }}
       horizontal
       contentContainerStyle={{
         flex: 1,
@@ -245,7 +346,11 @@ const DaySelecter = () => {
   );
 };
 
-const SetTypeEditor = ({ index, type, handlePress }) => {
+const SetTypeEditor: React.FC<{
+  index: number;
+  type: "Standard" | "Warm-up" | "Drop" | "Failure";
+  handlePress: () => void;
+}> = ({ index, type, handlePress }) => {
   const styles = useRef({
     Standard: {
       container: "bg-white-100",
@@ -277,10 +382,14 @@ const SetTypeEditor = ({ index, type, handlePress }) => {
   );
 };
 
-const SetEditor = ({ index, set, handleEditSet }) => {
+const SetEditor: React.FC<{
+  index: number;
+  set: EditableSet;
+  handleEditSet: (updatedSet: EditableSet) => void;
+}> = ({ index, set, handleEditSet }) => {
   const setTypes = useRef(["Standard", "Warm-up", "Drop", "Failure"]);
 
-  const handleEdits = (field, value) => {
+  const handleEdits = (field: string, value: string) => {
     switch (field) {
       case "type":
         const index = setTypes.current.indexOf(value);
@@ -290,7 +399,7 @@ const SetEditor = ({ index, set, handleEditSet }) => {
             : setTypes.current[index + 1];
         handleEditSet({
           ...set,
-          type: newType,
+          type: newType as "Standard" | "Warm-up" | "Drop" | "Failure",
         });
         break;
       default:
@@ -314,7 +423,7 @@ const SetEditor = ({ index, set, handleEditSet }) => {
         <TextInput
           className="flex-1 text-gray font-gregular text-cbody text-center"
           keyboardType="numeric"
-          value={set.weight}
+          value={set.weight ?? ""}
           placeholder={"N/A"}
           placeholderTextColor="#BABABA"
           onChangeText={(w) => handleEdits("weight", w)}
@@ -328,7 +437,7 @@ const SetEditor = ({ index, set, handleEditSet }) => {
         <TextInput
           className="flex-1 text-gray font-gregular text-cbody text-center"
           keyboardType="numeric"
-          value={set.reps}
+          value={set.reps ?? ""}
           placeholder={"N/A"}
           placeholderTextColor="#BABABA"
           onChangeText={(r) => handleEdits("reps", r)}
@@ -340,7 +449,7 @@ const SetEditor = ({ index, set, handleEditSet }) => {
   );
 };
 
-const EditorCard = ({ exercise }) => {
+const EditorCard: React.FC<{ exercise: EditableExercise }> = ({ exercise }) => {
   const { form, dispatch } = useContext(WorkoutContext);
   const [isExpanded, setIsExpanded] = useState(false);
 
@@ -356,7 +465,7 @@ const EditorCard = ({ exercise }) => {
     });
   };
 
-  const handleEditSet = (updatedSet) => {
+  const handleEditSet = (updatedSet: EditableSet) => {
     dispatch({
       type: "EDIT_SET",
       updatedSet: updatedSet,
@@ -375,7 +484,7 @@ const EditorCard = ({ exercise }) => {
     });
   };
 
-  const handleEditRest = (updatedRest) => {
+  const handleEditRest = (updatedRest: string) => {
     dispatch({
       type: "EDIT_EXERCISE",
       exercise: {
@@ -410,13 +519,16 @@ const EditorCard = ({ exercise }) => {
                 className="flex-row flex-wrap mt-2 mb-[-4px]"
                 data={splitField(exercise.tags)}
                 keyExtractor={(item) => item}
-                renderItem={({ item: tag }) => (
-                  <View className="bg-white-100 py-1 px-2.5 rounded-xl mr-1 mb-1">
-                    <Text className="text-gray font-gregular text-ctri">
-                      {tag}
-                    </Text>
-                  </View>
-                )}
+                renderItem={(props) => {
+                  const { item: tag } = props as MyListRenderItemInfo<string>;
+                  return (
+                    <View className="bg-white-100 py-1 px-2.5 rounded-xl mr-1 mb-1">
+                      <Text className="text-gray font-gregular text-ctri">
+                        {tag}
+                      </Text>
+                    </View>
+                  );
+                }}
                 scrollEnabled={false}
               />
             </View>
@@ -431,13 +543,17 @@ const EditorCard = ({ exercise }) => {
           <KeyboardAwareFlatList
             data={exercise.setIds}
             keyExtractor={(setId) => setId}
-            renderItem={({ item: setId, index }) => (
-              <SetEditor
-                index={index}
-                set={form.sets[setId]}
-                handleEditSet={handleEditSet}
-              />
-            )}
+            renderItem={(props) => {
+              const { item: setId, index } =
+                props as MyListRenderItemInfo<string>;
+              return (
+                <SetEditor
+                  index={index}
+                  set={form.sets[setId]}
+                  handleEditSet={handleEditSet}
+                />
+              );
+            }}
             ItemSeparatorComponent={() => <View className="h-1"></View>}
             ListHeaderComponent={() => (
               <View className="flex flex-row justify-between items-center space-x-2 mb-2">
@@ -490,6 +606,7 @@ const EditorCard = ({ exercise }) => {
               />
               <CustomButton
                 title="Add Set"
+                style="primary"
                 handlePress={handleAddSet}
                 disabled={exercise.setIds.length >= 15}
               />
@@ -527,9 +644,10 @@ const Editor = () => {
       <KeyboardAwareFlatList
         data={form.workout.exerciseIds}
         keyExtractor={(exerciseId) => exerciseId}
-        renderItem={({ item: exerciseId }) => (
-          <EditorCard exercise={form.exercises[exerciseId]} />
-        )}
+        renderItem={(props) => {
+          const { item: exerciseId } = props as MyListRenderItemInfo<string>;
+          return <EditorCard exercise={form.exercises[exerciseId]} />;
+        }}
         keyboardShouldPersistTaps="handled"
         keyboardOpeningTime={400}
         extraScrollHeight={64}
@@ -550,7 +668,7 @@ const Editor = () => {
               iconInsideField
               value={form.workout.name}
               handleChangeText={(name) =>
-                dispatch({ type: "CHANGE_NAME", name })
+                dispatch({ type: "CHANGE_NAME", name: name })
               }
               placeholder="Enter workout name"
               containerStyles="mt-2 mb-3"

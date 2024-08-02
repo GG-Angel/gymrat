@@ -9,7 +9,7 @@ interface FormFieldProps {
   Icon?: React.FC<SvgProps>;
   iconSize?: number;
   iconInsideField?: boolean;
-  title: string;
+  title?: string;
   value?: string;
   placeholder?: string;
   handleChangeText: (newValue: string) => void;
