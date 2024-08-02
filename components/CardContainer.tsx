@@ -2,7 +2,7 @@ import { View } from 'react-native'
 import React from 'react'
 
 interface CardContainerProps {
-  children?: React.ReactNode,
+  children: React.ReactNode,
   containerStyles?: string
 }
 
