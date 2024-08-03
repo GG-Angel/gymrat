@@ -25,7 +25,7 @@ import {
   UsableSet,
 } from "../../database/database";
 import { SQLiteDatabase, useSQLiteContext } from "expo-sqlite";
-import { formatRest } from "../../utils/format";
+import { formatTime } from "../../utils/format";
 import CustomButton from "../../components/CustomButton";
 import { MyListRenderItemInfo } from "@/utils/types";
 
@@ -189,7 +189,7 @@ const ExerciseCard: React.FC<{ exercise: UsableExercise }> = ({ exercise }) => {
           />
           <View className="bg-white-100 px-2.5 py-1 rounded-md mt-4 flex-shrink self-start">
             <Text className="text-gray font-gregular text-cbody">
-              Rest for {formatRest(exercise.rest)}
+              Rest for {formatTime(exercise.rest)}
             </Text>
           </View>
         </CardContainer>

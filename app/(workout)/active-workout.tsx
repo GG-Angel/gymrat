@@ -4,10 +4,14 @@ import {
   TouchableOpacity,
   TextInput,
   ScrollView,
+  Platform,
+  Vibration,
 } from "react-native";
 import React, {
   createContext,
+  Dispatch,
   PropsWithChildren,
+  SetStateAction,
   useContext,
   useEffect,
   useMemo,
@@ -20,8 +24,9 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import Icons from "@/constants/icons";
 import CustomButton from "@/components/CustomButton";
 import CardContainer from "@/components/CardContainer";
-import { parseDecimal, parseWhole } from "@/utils/format";
+import { formatTime, parseDecimal, parseWhole } from "@/utils/format";
 import { UsableRoutine } from "@/database/database";
+import { SvgProps } from "react-native-svg";
 
 interface WorkoutState extends UsableRoutine {
   exerciseIndex: number;
@@ -32,10 +37,12 @@ interface WorkoutState extends UsableRoutine {
 
 interface WorkoutContextValues {
   state: WorkoutState;
-  dispatch: React.Dispatch<ReducerAction>;
+  dispatch: Dispatch<ReducerAction>;
   currentExercise: CurrentExercise;
   currentSet: CurrentSet;
   setTypeColorsRef: React.MutableRefObject<SetTypeColors>;
+  isOpened: IsOpenedState;
+  setIsOpened: Dispatch<SetStateAction<IsOpenedState>>;
 }
 
 type ReducerAction =
@@ -49,6 +56,12 @@ type ReducerAction =
       weight?: number;
       reps?: number;
     };
+
+interface IsOpenedState {
+  calculator: boolean;
+  timer: boolean;
+  notes: boolean;
+}
 
 type CurrentExercise = {
   _id: string;
@@ -181,6 +194,11 @@ const WorkoutProvider: React.FC<PropsWithChildren> = ({ children }) => {
   const [currentExercise, setCurrentExercise] =
     useState<CurrentExercise>(getCurrentExercise());
   const [currentSet, setCurrentSet] = useState<CurrentSet>(getCurrentSet());
+  const [isOpened, setIsOpened] = useState<IsOpenedState>({
+    calculator: false,
+    timer: false,
+    notes: false,
+  });
 
   const setTypeColorsRef = useRef({
     Standard: "secondary",
@@ -215,8 +233,24 @@ const WorkoutProvider: React.FC<PropsWithChildren> = ({ children }) => {
   }
 
   const contextValue = useMemo(
-    () => ({ state, dispatch, currentExercise, currentSet, setTypeColorsRef }),
-    [state, dispatch, currentExercise, currentSet, setTypeColorsRef]
+    () => ({
+      state,
+      dispatch,
+      currentExercise,
+      currentSet,
+      setTypeColorsRef,
+      isOpened,
+      setIsOpened,
+    }),
+    [
+      state,
+      dispatch,
+      currentExercise,
+      currentSet,
+      setTypeColorsRef,
+      isOpened,
+      setIsOpened,
+    ]
   );
 
   // useEffect(() => {
@@ -315,9 +349,145 @@ const Counter: React.FC<{
   );
 };
 
+const RestTimer: React.FC<{
+  initialSeconds: number;
+  containerStyles?: string;
+}> = ({ initialSeconds, containerStyles }) => {
+  const { setIsOpened } = useContext(WorkoutContext);
+  const [seconds, setSeconds] = useState(initialSeconds);
+  const timerIdRef = useRef<NodeJS.Timeout | null>(null);
+
+  const oneSecondInMS = 1000;
+  const halfSecondInMS = 500;
+  const vibrationPattern =
+    Platform.OS === "android"
+      ? [
+          0, // start immediately
+          halfSecondInMS, // vibrate for 0.5s
+          oneSecondInMS, // wait for 1s
+          halfSecondInMS, // vibrate for 0.5s
+          oneSecondInMS, // wait for 1s
+          halfSecondInMS, // vibrate for 0.5s
+        ]
+      : [
+          0, // start immediately
+          halfSecondInMS, // vibrate
+          halfSecondInMS, // wait
+          halfSecondInMS, // vibrate
+          halfSecondInMS, // wait, then vibrate
+        ];
+
+  useEffect(() => {
+    // decrement timer
+    if (seconds > 0) {
+      timerIdRef.current = setTimeout(() => {
+        setSeconds((prev) => prev - 1);
+      }, oneSecondInMS);
+    } else {
+      // close timer once time ends after 7 seconds
+      Vibration.vibrate(vibrationPattern);
+      timerIdRef.current = setTimeout(() => {
+        setIsOpened((prev) => ({ ...prev, timer: false }));
+      }, 7 * oneSecondInMS);
+    }
+
+    return () => {
+      if (timerIdRef.current) {
+        clearTimeout(timerIdRef.current);
+      }
+    };
+  }, [seconds]);
+
+  return (
+    <CardContainer
+      containerStyles={`flex-row space-x-2 justify-between ${containerStyles}`}
+    >
+      <View className="flex-row space-x-2">
+        <Icons.restTimer />
+        <View>
+          <Text className="text-secondary font-gbold text-ch1">
+            {seconds > 0 ? formatTime(seconds) : "Start Set!"}
+          </Text>
+          <Text className="text-gray font-gregular text-csub">Rest Timer</Text>
+        </View>
+      </View>
+      <TouchableOpacity
+        onPress={() => setIsOpened((prev) => ({ ...prev, timer: false }))}
+      >
+        <Icons.closeTab />
+      </TouchableOpacity>
+    </CardContainer>
+  );
+};
+
+const TabBarIcon: React.FC<{
+  Icon: React.FC<SvgProps>;
+  disabled?: boolean;
+  handlePress: () => void;
+}> = ({ Icon, disabled, handlePress }) => {
+  return (
+    <TouchableOpacity
+      className={`${disabled && "opacity-25"}`}
+      disabled={disabled}
+      onPress={handlePress}
+    >
+      <Icon />
+    </TouchableOpacity>
+  );
+};
+
+const TabBar: React.FC = () => {
+  const { state, dispatch, isOpened, setIsOpened } = useContext(WorkoutContext);
+
+  return (
+    <View className="h-[76px] px-8 flex-row justify-between">
+      <TabBarIcon
+        Icon={Icons.tabLeft}
+        disabled={state.exerciseIndex === 0 && state.setIndex === 0}
+        handlePress={() => dispatch({ type: "PREVIOUS_SET" })}
+      />
+      <TabBarIcon
+        Icon={Icons.tabCalc}
+        disabled={isOpened.calculator}
+        handlePress={() =>
+          setIsOpened((prev) => ({ ...prev, calculator: true }))
+        }
+      />
+      <TabBarIcon
+        Icon={Icons.tabTimer}
+        disabled={isOpened.timer}
+        handlePress={() => setIsOpened((prev) => ({ ...prev, timer: true }))}
+      />
+      <TabBarIcon
+        Icon={Icons.tabNotes}
+        disabled={isOpened.notes}
+        handlePress={() => setIsOpened((prev) => ({ ...prev, notes: true }))}
+      />
+      <TabBarIcon
+        Icon={Icons.tabRight}
+        handlePress={() => dispatch({ type: "NEXT_SET" })}
+      />
+    </View>
+  );
+};
+
 const InProgressWorkoutPage: React.FC = () => {
-  const { state, dispatch, currentExercise, currentSet } =
-    useContext(WorkoutContext);
+  const {
+    state,
+    dispatch,
+    currentExercise,
+    currentSet,
+    isOpened,
+    setIsOpened,
+  } = useContext(WorkoutContext);
+
+  useEffect(() => {
+    setIsOpened({
+      calculator: false,
+      timer: false,
+      notes: false,
+    });
+  }, [state.exerciseIndex]);
 
   const handleChangeValue = (
     field: "weight" | "reps",
@@ -364,66 +534,64 @@ const InProgressWorkoutPage: React.FC = () => {
   };
 
   return (
-    <>
-      <View className="flex flex-row items-center space-x-2">
-        <TouchableOpacity onPress={() => router.back()}>
-          <Icons.exitWorkout />
-        </TouchableOpacity>
-        <View className="flex-1">
-          <ProgressBar />
-        </View>
-      </View>
-      <ScrollView className="my-4">
-        <Text className="text-gray font-gregular text-csub">
-          {state.workout.name}
-        </Text>
-        <Text className="text-secondary font-gbold text-ch1">
-          {currentExercise.name}
-        </Text>
-        <View className="flex flex-row items-center mt-2">
-          <View className="bg-primary px-2.5 py-1 rounded-xl mr-1">
-            <Text className="text-white font-gsemibold text-cbody">
-              Set {state.setIndex + 1}/{currentExercise.setIds.length}
-            </Text>
+    <View className="flex-1 justify-between">
+      <View className="flex-1 px-8">
+        <View className="flex flex-row items-center space-x-2">
+          <TouchableOpacity onPress={() => router.back()}>
+            <Icons.exitWorkout />
+          </TouchableOpacity>
+          <View className="flex-1">
+            <ProgressBar />
           </View>
-          <SetTypeIndicator type={currentSet.type} />
         </View>
-        <View className="mt-6">
-          <Counter
-            field="weight"
-            value={currentSet.weight}
-            handleChangeValue={handleChangeValue}
-          />
-          <Counter
-            field="reps"
-            value={currentSet.reps}
-            handleChangeValue={handleChangeValue}
-            containerStyles="mt-4"
-          />
-        </View>
-        <View className="flex-row justify-between mt-8">
-          <CustomButton
-            title="Previous Set"
-            style="secondary"
-            handlePress={() => dispatch({ type: "PREVIOUS_SET" })}
-            containerStyles="flex-[0.4]"
-          />
-          <CustomButton
-            title="Next Set"
-            style="primary"
-            handlePress={() => dispatch({ type: "NEXT_SET" })}
-            containerStyles="flex-[0.4]"
-          />
-        </View>
-      </ScrollView>
-    </>
+        <ScrollView className="my-4">
+          <Text className="text-gray font-gregular text-csub">
+            {state.workout.name}
+          </Text>
+          <Text className="text-secondary font-gbold text-ch1">
+            {currentExercise.name}
+          </Text>
+          <View className="flex flex-row items-center mt-2">
+            <View className="bg-primary px-2.5 py-1 rounded-xl mr-1">
+              <Text className="text-white font-gsemibold text-cbody">
+                Set {state.setIndex + 1}/{currentExercise.setIds.length}
+              </Text>
+            </View>
+            <SetTypeIndicator type={currentSet.type} />
+          </View>
+          <View className="mt-6">
+            <Counter
+              field="weight"
+              value={currentSet.weight}
+              handleChangeValue={handleChangeValue}
+            />
+            <Counter
+              field="reps"
+              value={currentSet.reps}
+              handleChangeValue={handleChangeValue}
+              containerStyles="mt-4"
+            />
+            {isOpened.timer && (
+              <RestTimer
+                initialSeconds={currentExercise.rest}
+                containerStyles="mt-4"
+              />
+            )}
+          </View>
+        </ScrollView>
+      </View>
+      <TabBar />
+    </View>
   );
 };
 
 const ActiveWorkout = () => {
   return (
     <WorkoutProvider>
-      <SafeAreaView className="bg-white-100 h-full px-8">
+      <SafeAreaView
+        className="bg-white-100 h-full"
+        edges={["left", "right", "top"]}
+      >
         <InProgressWorkoutPage />
       </SafeAreaView>
     </WorkoutProvider>

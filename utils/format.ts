@@ -37,16 +37,21 @@ export const formatTags = (fields: TagsResult[]): string[] => {
   return uniqueTags;
 };
 
-export const formatRest = (totalSeconds: number): string => {
-  function padLeft(num: number, pad: string, length: number): string {
-    return (new Array(length + 1).join(pad) + num).slice(-length);
-  }
+export const formatTime = (totalSeconds: number): string => {
+  const { minutes, seconds } = parseSeconds(totalSeconds);
+  const finalTime = `${minutes}:${seconds < 10 ? "0" : ""}${seconds}`;
+  return finalTime;
+};
 
+export const parseSeconds = (
+  totalSeconds: number
+): { seconds: number; minutes: number } => {
   const minutes = Math.floor(totalSeconds / 60);
   const seconds = totalSeconds - minutes * 60;
-  const finalTime = padLeft(minutes, "0", 2) + ":" + padLeft(seconds, "0", 2);
-
-  return finalTime;
+  return {
+    minutes: minutes,
+    seconds: seconds,
+  };
 };
 
 export const parseDecimal = (value: string | number): number => {

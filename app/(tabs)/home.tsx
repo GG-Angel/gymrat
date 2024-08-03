@@ -14,7 +14,7 @@ import React, {
 } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import { Icons } from "../../constants";
+import { Icons, Images } from "../../constants";
 
 import Divider from "../../components/Divider";
 import CardContainer from "../../components/CardContainer";
@@ -298,42 +298,60 @@ const WorkoutCard: React.FC<{ workout: FormattedWorkout }> = ({ workout }) => {
 
 const HomePage = () => {
   const { state, dispatch } = useContext(HomeContext);
+
   return (
     <>
       <View className="mt-2">
         <Text className="text-secondary font-gbold text-ch1">Home</Text>
       </View>
-      <View className="mt-6">
-        <Text className="text-gray font-gregular text-csub mb-3">
-          Recommended Workouts
-        </Text>
-        {/* <RecommendedWorkouts /> */}
-      </View>
-      <View className="mt-6">
-        <View className="flex-row justify-between items-center">
-          <Text className="text-gray font-gregular text-csub mb-3">
-            Workout Library
-          </Text>
-          <TouchableOpacity
-            onPress={() => router.push("/new-workout")}
-            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-          >
-            <Icons.add />
-          </TouchableOpacity>
-        </View>
-        <FilterBar />
-      </View>
+      { state.workouts.length > 0 && (
+        <>
+          <View className="mt-6">
+            <Text className="text-gray font-gregular text-csub mb-3">
+              Recommended Workouts
+            </Text>
+            {/* <RecommendedWorkouts /> */}
+          </View>
+          <View className="mt-6">
+            <View className="flex-row justify-between items-center">
+              <Text className="text-gray font-gregular text-csub mb-3">
+                Workout Library
+              </Text>
+              <TouchableOpacity
+                onPress={() => router.push("/new-workout")}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              >
+                <Icons.add />
+              </TouchableOpacity>
+            </View>
+            <FilterBar />
+          </View>
+        </>
+      )}
       <FlatList
         className="mt-4"
-        contentContainerStyle={{ paddingBottom: 72 }}
+        contentContainerStyle={{
+          paddingBottom: 72,
+          flexGrow: 1,
+        }}
         data={state.workouts}
         keyExtractor={(item) => item._id}
         renderItem={(props) => {
-          const { item: workout } =
-            props as MyListRenderItemInfo<FormattedWorkout>;
+          const { item: workout } = props as MyListRenderItemInfo<FormattedWorkout>;
           return <WorkoutCard workout={workout} />;
         }}
         ItemSeparatorComponent={() => <View className="h-[12px]"></View>}
+        ListEmptyComponent={() => (
+          <View className="flex-1 justify-center items-center">
+            <EmptyState 
+              Image={Icons.empty}
+              headerText="No Workouts Found"
+              subheadText="Create a new workout to start tracking your progress"
+              buttonTitle="Create a New Workout"
+              buttonHandlePress={() => router.push("/new-workout")}
+            />
+          </View>
+        )}
       />
     </>
   );
