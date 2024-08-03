@@ -33,7 +33,7 @@ import {
 } from "@/database/database";
 import { useSQLiteContext } from "expo-sqlite";
 import { splitField } from "@/utils/format";
-import { MyListRenderItemInfo } from "@/utils/types";
+import { DayOfWeek, MyListRenderItemInfo } from "@/utils/types";
 
 interface EditWorkoutContextValues {
   form: EditableRoutine;
@@ -47,14 +47,7 @@ type ReducerAction =
     }
   | {
       type: "TOGGLE_DAY";
-      day:
-        | "Sunday"
-        | "Monday"
-        | "Tuesday"
-        | "Wednesday"
-        | "Thursday"
-        | "Friday"
-        | "Saturday";
+      day: DayOfWeek;
     }
   | {
       type: "ADD_EXERCISE";
@@ -92,7 +85,10 @@ const WorkoutContext = createContext<EditWorkoutContextValues>(
   {} as EditWorkoutContextValues
 );
 
-function workoutReducer(state: EditableRoutine, action: ReducerAction) {
+function workoutReducer(
+  state: EditableRoutine,
+  action: ReducerAction
+): EditableRoutine {
   switch (action.type) {
     case "CHANGE_NAME":
       return {
@@ -124,7 +120,7 @@ function workoutReducer(state: EditableRoutine, action: ReducerAction) {
           ...state.exercises,
           [action.exercise._id]: {
             _id: action.exercise._id,
-            master_id: action.exercise.master_id, // will be null if exercise is custom
+            master_id: action.exercise.master_id ?? null, // will be null if exercise is custom
             // an isLinked field could easily determine whether ot not to update other master exercise
             name: action.exercise.name,
             rest: "90",
@@ -261,14 +257,7 @@ const WorkoutProvider: React.FC<PropsWithChildren> = ({ children }) => {
 };
 
 const DayToggle: React.FC<{
-  day:
-    | "Sunday"
-    | "Monday"
-    | "Tuesday"
-    | "Wednesday"
-    | "Thursday"
-    | "Friday"
-    | "Saturday";
+  day: DayOfWeek;
   isSelected: boolean;
   handleToggle: () => void;
 }> = ({ day, isSelected, handleToggle }) => {
@@ -310,28 +299,12 @@ const DaySelecter = () => {
         const { item: day } = props as MyListRenderItemInfo<string>;
         return (
           <DayToggle
-            day={
-              day as
-                | "Sunday"
-                | "Monday"
-                | "Tuesday"
-                | "Wednesday"
-                | "Thursday"
-                | "Friday"
-                | "Saturday"
-            }
+            day={day as DayOfWeek}
             isSelected={form.workout.days.includes(day)}
             handleToggle={() =>
               dispatch({
                 type: "TOGGLE_DAY",
-                day: day as
-                  | "Sunday"
-                  | "Monday"
-                  | "Tuesday"
-                  | "Wednesday"
-                  | "Thursday"
-                  | "Friday"
-                  | "Saturday",
+                day: day as DayOfWeek,
               })
             }
           />
