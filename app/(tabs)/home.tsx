@@ -25,6 +25,7 @@ import { formatDays, formatTags, splitField } from "../../utils/format";
 import { useFocusEffect } from "@react-navigation/native";
 import { FetchedWorkout } from "@/database/database";
 import { MyListRenderItemInfo } from "@/utils/types";
+import { calculateWeightPotential } from "@/utils/calculations";
 
 interface HomeContextValues {
   state: HomeState;

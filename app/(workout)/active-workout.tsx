@@ -5,6 +5,7 @@ import {
   TextInput,
   Platform,
   Vibration,
+  FlatList,
 } from "react-native";
 import React, {
   createContext,
@@ -26,6 +27,9 @@ import { formatTime, parseDecimal, parseWhole } from "@/utils/format";
 import { UsableRoutine } from "@/database/database";
 import { SvgProps } from "react-native-svg";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
+import { calculateWeightPotential } from "@/utils/calculations";
+import { MyListRenderItemInfo } from "@/utils/types";
+import { BlurView } from "expo-blur";
 
 interface WorkoutState extends UsableRoutine {
   exerciseIndex: number;
@@ -269,9 +273,9 @@ const WorkoutProvider: React.FC<PropsWithChildren> = ({ children }) => {
     ]
   );
 
-  useEffect(() => {
-    console.log(JSON.stringify(currentExercise, null, 2));
-  }, [currentExercise]);
+  // useEffect(() => {
+  //   console.log(JSON.stringify(currentSet, null, 2));
+  // }, [currentSet]);
 
   return (
     <WorkoutContext.Provider value={contextValue}>
@@ -323,19 +327,35 @@ const Counter: React.FC<{
   ) => void;
   containerStyles?: string;
 }> = ({ field, value, handleChangeValue, containerStyles }) => {
-  const [localValue, setLocalValue] = useState(value ? String(value) : "");
+  const { currentSet } = useContext(WorkoutContext);
+  const [localValue, setLocalValue] = useState<string>(
+    value ? String(value) : ""
+  );
+  const [addDisabled, setAddDisabled] = useState<boolean>(false);
+  const [subtractDisabled, setSubtractDisabled] = useState<boolean>(false);
 
   useEffect(() => {
     setLocalValue(value ? String(value) : "");
-  }, [value]);
+  }, [currentSet]);
+
+  useEffect(() => {
+    if (field === "weight") {
+      setAddDisabled(localValue.length > 7 || (value ?? 0) > 9999994);
+      setSubtractDisabled(localValue === "" || (value ?? 0) < 5);
+    } else {
+      setAddDisabled(localValue.length > 4 || (value ?? 0) >= 9999);
+      setSubtractDisabled(localValue === "" || (value ?? 0) < 1);
+    }
+  }, [localValue, value]);
 
   return (
     <CardContainer
       containerStyles={`flex-row items-center justify-between space-x-4 ${containerStyles}`}
     >
       <TouchableOpacity
+        className={`${subtractDisabled && "opacity-25"}`}
+        disabled={subtractDisabled}
         onPress={() => handleChangeValue(field, "subtract")}
-        onLongPress={() => {}}
       >
         <Icons.subtractCircle />
       </TouchableOpacity>
@@ -356,8 +376,9 @@ const Counter: React.FC<{
         </Text>
       </View>
       <TouchableOpacity
+        className={`${addDisabled && "opacity-25"}`}
+        disabled={addDisabled}
         onPress={() => handleChangeValue(field, "add")}
-        onLongPress={() => {}}
       >
         <Icons.addCircle />
       </TouchableOpacity>
@@ -443,11 +464,11 @@ const Notes: React.FC<{ containerStyles?: string }> = ({ containerStyles }) => {
 
   useEffect(() => {
     setLocalValue(currentExercise.notes);
-  }, [currentExercise])
+  }, [currentExercise]);
 
   return (
     <CardContainer containerStyles={containerStyles}>
-      <View className="flex-row justify-between">
+      <View className="flex-row items-center justify-between">
         <View className="flex-row space-x-2">
           <Icons.notes />
           <Text className="text-secondary font-gsemibold text-csub">Notes</Text>
@@ -455,7 +476,7 @@ const Notes: React.FC<{ containerStyles?: string }> = ({ containerStyles }) => {
         <TouchableOpacity
           onPress={() => setIsOpened((prev) => ({ ...prev, notes: false }))}
           hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
-          >
+        >
           <Icons.closeTab />
         </TouchableOpacity>
       </View>
@@ -480,6 +501,96 @@ const Notes: React.FC<{ containerStyles?: string }> = ({ containerStyles }) => {
   );
 };
 
+const OneRepMaxCalculator: React.FC<{ containerStyles?: string }> = ({
+  containerStyles,
+}) => {
+  const { currentSet, setIsOpened } = useContext(WorkoutContext);
+  const weightPotential = calculateWeightPotential(
+    currentSet.weight ?? 0,
+    currentSet.reps ?? 0
+  );
+  const oneRepMax = weightPotential[0];
+
+  return (
+    <CardContainer containerStyles={`space-y-4 ${containerStyles}`}>
+      <View className="flex-row items-center justify-between">
+        <View className="flex-row space-x-2">
+          <Icons.calculator />
+          <Text className="text-secondary font-gsemibold text-csub">
+            One Rep Max Calculator
+          </Text>
+        </View>
+        <TouchableOpacity
+          onPress={() =>
+            setIsOpened((prev) => ({ ...prev, calculator: false }))
+          }
+          hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
+        >
+          <Icons.closeTab />
+        </TouchableOpacity>
+      </View>
+      <View>
+        <Text className="text-secondary font-gsemibold text-csub">
+          Your 1RM is{" "}
+          <Text className="text-primary">{oneRepMax.weight} lbs</Text>
+        </Text>
+        <Text className="text-gray font-gregular text-cbody">
+          Calculated from {currentSet.reps} reps with {currentSet.weight} lbs
+        </Text>
+      </View>
+      <FlatList
+        data={weightPotential}
+        keyExtractor={(item) => item.percentage.toString()}
+        ListHeaderComponent={() => (
+          <View className="flex-row space-x-2 mb-2">
+            <Text className="flex-[0.24] text-secondary font-gsemibold text-cbody text-center">
+              % of 1RM
+            </Text>
+            <Text className="flex-[0.38] text-secondary font-gsemibold text-cbody text-center">
+              Weight (lbs)
+            </Text>
+            <Text className="flex-[0.38] text-secondary font-gsemibold text-cbody text-center">
+              Reps of 1RM
+            </Text>
+          </View>
+        )}
+        ItemSeparatorComponent={() => <View className="h-1"></View>}
+        renderItem={(props) => {
+          const { item } = props as MyListRenderItemInfo<{
+            percentage: number;
+            weight: number;
+            reps: number;
+          }>;
+          return (
+            <View className="flex-row space-x-2">
+              <View className="flex-[0.24] bg-white-100 py-1 rounded-md">
+                <Text className="text-gray font-gregular text-cbody text-center">
+                  {item.percentage}%
+                </Text>
+              </View>
+              <View className="flex-[0.38] bg-white-100 py-1 rounded-md">
+                <Text className="text-gray font-gregular text-cbody text-center">
+                  {item.weight}
+                </Text>
+              </View>
+              <View className="flex-[0.38] bg-white-100 py-1 rounded-md">
+                <Text className="text-gray font-gregular text-cbody text-center">
+                  {item.reps}
+                </Text>
+              </View>
+            </View>
+          );
+        }}
+      />
+      <View>
+        <Text className="text-gray-100 font-gregular text-ctri">
+          Calculations from strengthlevel.com
+        </Text>
+      </View>
+    </CardContainer>
+  );
+};
+
 const TabBarIcon: React.FC<{
   Icon: React.FC<SvgProps>;
   disabled?: boolean;
@@ -498,7 +609,8 @@ const TabBarIcon: React.FC<{
 };
 
 const TabBar: React.FC = () => {
-  const { state, dispatch, isOpened, setIsOpened } = useContext(WorkoutContext);
+  const { state, dispatch, isOpened, currentSet, setIsOpened } =
+    useContext(WorkoutContext);
 
   return (
     <View className="h-[76px] px-8 flex-row justify-between">
@@ -509,7 +621,7 @@ const TabBar: React.FC = () => {
       />
       <TabBarIcon
         Icon={Icons.tabCalc}
-        disabled={isOpened.calculator}
+        disabled={isOpened.calculator || !currentSet.reps || !currentSet.weight}
         handlePress={() =>
           setIsOpened((prev) => ({ ...prev, calculator: true }))
         }
@@ -595,73 +707,83 @@ const InProgressWorkoutPage: React.FC = () => {
   };
 
   return (
-    <View className="flex-1 justify-between">
-      <View className="flex-1 px-8">
-        <View className="flex flex-row items-center space-x-2">
-          <TouchableOpacity onPress={() => router.back()}>
-            <Icons.exitWorkout />
-          </TouchableOpacity>
-          <View className="flex-1">
-            <ProgressBar />
-          </View>
-        </View>
-        <KeyboardAwareScrollView
-          className="my-4"
-          keyboardShouldPersistTaps="never"
-          enableAutomaticScroll={true}
-          keyboardOpeningTime={425}
-          extraScrollHeight={64}
-        >
-          <Text className="text-gray font-gregular text-csub">
-            {state.workout.name}
-          </Text>
-          <Text className="text-secondary font-gbold text-ch1">
-            {currentExercise.name}
-          </Text>
-          <View className="flex flex-row items-center mt-2">
-            <View className="bg-primary px-2.5 py-1 rounded-xl mr-1">
-              <Text className="text-white font-gsemibold text-cbody">
-                Set {state.setIndex + 1}/{currentExercise.setIds.length}
-              </Text>
+    <>
+      <SafeAreaView
+        className="bg-white-100 h-full"
+        edges={["left", "right", "top"]}
+      >
+        <View className="flex-1 justify-between">
+          <View className="flex-1 px-8">
+            <View className="flex flex-row items-center space-x-2">
+              <TouchableOpacity onPress={() => router.back()}>
+                <Icons.exitWorkout />
+              </TouchableOpacity>
+              <View className="flex-1">
+                <ProgressBar />
+              </View>
             </View>
-            <SetTypeIndicator type={currentSet.type} />
+            <KeyboardAwareScrollView
+              className="my-4"
+              keyboardShouldPersistTaps="never"
+              enableAutomaticScroll={true}
+              keyboardOpeningTime={425}
+              extraScrollHeight={64}
+            >
+              <Text className="text-gray font-gregular text-csub">
+                {state.workout.name}
+              </Text>
+              <Text className="text-secondary font-gbold text-ch1">
+                {currentExercise.name}
+              </Text>
+              <View className="flex flex-row items-center mt-2">
+                <View className="bg-primary px-2.5 py-1 rounded-xl mr-1">
+                  <Text className="text-white font-gsemibold text-cbody">
+                    Set {state.setIndex + 1}/{currentExercise.setIds.length}
+                  </Text>
+                </View>
+                <SetTypeIndicator type={currentSet.type} />
+              </View>
+              <View className="mt-6">
+                <Counter
+                  field="weight"
+                  value={currentSet.weight}
+                  handleChangeValue={handleChangeValue}
+                />
+                <Counter
+                  field="reps"
+                  value={currentSet.reps}
+                  handleChangeValue={handleChangeValue}
+                  containerStyles="mt-4"
+                />
+                {isOpened.timer && (
+                  <RestTimer
+                    initialSeconds={currentExercise.rest}
+                    containerStyles="mt-4"
+                  />
+                )}
+                {isOpened.notes && <Notes containerStyles="mt-4" />}
+              </View>
+            </KeyboardAwareScrollView>
           </View>
-          <View className="mt-6">
-            <Counter
-              field="weight"
-              value={currentSet.weight}
-              handleChangeValue={handleChangeValue}
-            />
-            <Counter
-              field="reps"
-              value={currentSet.reps}
-              handleChangeValue={handleChangeValue}
-              containerStyles="mt-4"
-            />
-            {isOpened.timer && (
-              <RestTimer
-                initialSeconds={currentExercise.rest}
-                containerStyles="mt-4"
-              />
-            )}
-            {isOpened.notes && <Notes containerStyles="mt-4" />}
-          </View>
-        </KeyboardAwareScrollView>
-      </View>
-      <TabBar />
-    </View>
+          <TabBar />
+        </View>
+      </SafeAreaView>
+      {isOpened.calculator && (
+        <BlurView
+          className="absolute w-full h-full px-8 flex justify-center"
+          intensity={25}
+        >
+          <OneRepMaxCalculator />
+        </BlurView>
+      )}
+    </>
   );
 };
 
 const ActiveWorkout = () => {
   return (
     <WorkoutProvider>
-      <SafeAreaView
-        className="bg-white-100 h-full"
-        edges={["left", "right", "top"]}
-      >
-        <InProgressWorkoutPage />
-      </SafeAreaView>
+      <InProgressWorkoutPage />
     </WorkoutProvider>
   );
 };

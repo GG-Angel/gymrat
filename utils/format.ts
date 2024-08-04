@@ -55,21 +55,26 @@ export const parseSeconds = (
 };
 
 export const parseDecimal = (value: string | number): number => {
-  const num = typeof value === "string" ? parseFloat(value) : value;
-
-  if (isNaN(num)) {
-    throw new Error("The given value is not a number.");
-  }
-
-  return Math.round(num * 100) / 100;
+  return Math.round(parseValue(value) * 100) / 100;
 };
 
 export const parseWhole = (value: string | number): number => {
-  const num = typeof value === "string" ? parseFloat(value) : value;
+  return Math.floor(parseValue(value));
+};
 
-  if (isNaN(num)) {
-    throw new Error("The given value is not a number");
+export const parseValue = (value: string | number): number => {
+  let num: number;
+
+  if (typeof value === "string") {
+    // Use Number to convert string to number
+    num = Number(value);
+    // Check if conversion was successful or if the string is invalid
+    if (isNaN(num) || !/^-?\d*\.?\d*$/.test(value)) {
+      return 0;
+    }
+  } else {
+    num = value;
   }
 
-  return Math.floor(num);
-};
+  return num;
+}
