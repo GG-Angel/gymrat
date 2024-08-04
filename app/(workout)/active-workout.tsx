@@ -3,7 +3,6 @@ import {
   Text,
   TouchableOpacity,
   TextInput,
-  ScrollView,
   Platform,
   Vibration,
 } from "react-native";
@@ -22,11 +21,11 @@ import React, {
 import { router, useLocalSearchParams } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Icons from "@/constants/icons";
-import CustomButton from "@/components/CustomButton";
 import CardContainer from "@/components/CardContainer";
 import { formatTime, parseDecimal, parseWhole } from "@/utils/format";
 import { UsableRoutine } from "@/database/database";
 import { SvgProps } from "react-native-svg";
+import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 
 interface WorkoutState extends UsableRoutine {
   exerciseIndex: number;
@@ -48,6 +47,11 @@ interface WorkoutContextValues {
 type ReducerAction =
   | {
       type: "NEXT_SET" | "PREVIOUS_SET";
+    }
+  | {
+      type: "CHANGE_NOTES";
+      exerciseId: string;
+      notes: string;
     }
   | {
       type: "CHANGE_SET_VALUE";
@@ -161,6 +165,18 @@ function workoutReducer(state: WorkoutState, action: ReducerAction) {
         };
       }
 
+    case "CHANGE_NOTES":
+      return {
+        ...state,
+        exercises: {
+          ...state.exercises,
+          [action.exerciseId]: {
+            ...state.exercises[action.exerciseId],
+            notes: action.notes,
+          },
+        },
+      };
+
     case "CHANGE_SET_VALUE":
       // console.log("ACTION:", JSON.stringify(action, null, 2));
       return {
@@ -253,9 +269,9 @@ const WorkoutProvider: React.FC<PropsWithChildren> = ({ children }) => {
     ]
   );
 
-  // useEffect(() => {
-  //   console.log(JSON.stringify(currentSet, null, 2));
-  // }, [currentSet]);
+  useEffect(() => {
+    console.log(JSON.stringify(currentExercise, null, 2));
+  }, [currentExercise]);
 
   return (
     <WorkoutContext.Provider value={contextValue}>
@@ -413,9 +429,53 @@ const RestTimer: React.FC<{
       </View>
       <TouchableOpacity
         onPress={() => setIsOpened((prev) => ({ ...prev, timer: false }))}
+        hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
       >
         <Icons.closeTab />
       </TouchableOpacity>
+    </CardContainer>
+  );
+};
+
+const Notes: React.FC<{ containerStyles?: string }> = ({ containerStyles }) => {
+  const { dispatch, currentExercise, setIsOpened } = useContext(WorkoutContext);
+  const [localValue, setLocalValue] = useState(currentExercise.notes);
+
+  useEffect(() => {
+    setLocalValue(currentExercise.notes);
+  }, [currentExercise])
+
+  return (
+    <CardContainer containerStyles={containerStyles}>
+      <View className="flex-row justify-between">
+        <View className="flex-row space-x-2">
+          <Icons.notes />
+          <Text className="text-secondary font-gsemibold text-csub">Notes</Text>
+        </View>
+        <TouchableOpacity
+          onPress={() => setIsOpened((prev) => ({ ...prev, notes: false }))}
+          hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
+          >
+          <Icons.closeTab />
+        </TouchableOpacity>
+      </View>
+      <View className="bg-white-100 rounded-md mt-4">
+        <TextInput
+          className="text-secondary font-gregular text-body py-3 px-4"
+          value={localValue}
+          onChangeText={(v) => setLocalValue(v)}
+          onBlur={() =>
+            dispatch({
+              type: "CHANGE_NOTES",
+              exerciseId: currentExercise._id,
+              notes: localValue,
+            })
+          }
+          placeholder="Enter exercise notes here"
+          multiline={true}
+          numberOfLines={4}
+        />
+      </View>
     </CardContainer>
   );
 };
@@ -430,6 +490,7 @@ const TabBarIcon: React.FC<{
       className={`${disabled && "opacity-25"}`}
       disabled={disabled}
       onPress={handlePress}
+      hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
     >
       <Icon />
     </TouchableOpacity>
@@ -485,7 +546,7 @@ const InProgressWorkoutPage: React.FC = () => {
     setIsOpened({
       calculator: false,
       timer: false,
-      notes: false,
+      notes: true,
     });
   }, [state.exerciseIndex]);
 
@@ -544,7 +605,13 @@ const InProgressWorkoutPage: React.FC = () => {
             <ProgressBar />
           </View>
         </View>
-        <ScrollView className="my-4">
+        <KeyboardAwareScrollView
+          className="my-4"
+          keyboardShouldPersistTaps="never"
+          enableAutomaticScroll={true}
+          keyboardOpeningTime={425}
+          extraScrollHeight={64}
+        >
           <Text className="text-gray font-gregular text-csub">
             {state.workout.name}
           </Text>
@@ -577,8 +644,9 @@ const InProgressWorkoutPage: React.FC = () => {
                 containerStyles="mt-4"
               />
             )}
+            {isOpened.notes && <Notes containerStyles="mt-4" />}
           </View>
-        </ScrollView>
+        </KeyboardAwareScrollView>
       </View>
       <TabBar />
     </View>

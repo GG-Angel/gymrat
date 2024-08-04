@@ -622,7 +622,7 @@ const Editor = () => {
           return <EditorCard exercise={form.exercises[exerciseId]} />;
         }}
         keyboardShouldPersistTaps="handled"
-        keyboardOpeningTime={400}
+        keyboardOpeningTime={425}
         extraScrollHeight={64}
         contentContainerStyle={{ paddingHorizontal: 32, paddingBottom: 80 }}
         ItemSeparatorComponent={() => <View className="h-4"></View>}
