@@ -33,7 +33,7 @@ import {
 } from "@/database/database";
 import { useSQLiteContext } from "expo-sqlite";
 import { splitField } from "@/utils/format";
-import { DayOfWeek, MyListRenderItemInfo } from "@/utils/types";
+import { DayOfWeek } from "@/utils/types";
 
 interface EditWorkoutContextValues {
   form: EditableRoutine;
@@ -295,21 +295,18 @@ const DaySelecter = () => {
     <KeyboardAwareFlatList
       data={daysOfWeek.current}
       keyExtractor={(day) => day}
-      renderItem={(props) => {
-        const { item: day } = props as MyListRenderItemInfo<string>;
-        return (
-          <DayToggle
-            day={day as DayOfWeek}
-            isSelected={form.workout.days.includes(day)}
-            handleToggle={() =>
-              dispatch({
-                type: "TOGGLE_DAY",
-                day: day as DayOfWeek,
-              })
-            }
-          />
-        );
-      }}
+      renderItem={({ item: day }) => (
+        <DayToggle
+          day={day as DayOfWeek}
+          isSelected={form.workout.days.includes(day)}
+          handleToggle={() =>
+            dispatch({
+              type: "TOGGLE_DAY",
+              day: day as DayOfWeek,
+            })
+          }
+        />
+      )}
       horizontal
       contentContainerStyle={{
         flex: 1,
@@ -492,16 +489,13 @@ const EditorCard: React.FC<{ exercise: EditableExercise }> = ({ exercise }) => {
                 className="flex-row flex-wrap mt-2 mb-[-4px]"
                 data={splitField(exercise.tags)}
                 keyExtractor={(item) => item}
-                renderItem={(props) => {
-                  const { item: tag } = props as MyListRenderItemInfo<string>;
-                  return (
-                    <View className="bg-white-100 py-1 px-2.5 rounded-xl mr-1 mb-1">
-                      <Text className="text-gray font-gregular text-ctri">
-                        {tag}
-                      </Text>
-                    </View>
-                  );
-                }}
+                renderItem={({ item: tag }) => (
+                  <View className="bg-white-100 py-1 px-2.5 rounded-xl mr-1 mb-1">
+                    <Text className="text-gray font-gregular text-ctri">
+                      {tag}
+                    </Text>
+                  </View>
+                )}
                 scrollEnabled={false}
               />
             </View>
@@ -516,17 +510,14 @@ const EditorCard: React.FC<{ exercise: EditableExercise }> = ({ exercise }) => {
           <KeyboardAwareFlatList
             data={exercise.setIds}
             keyExtractor={(setId) => setId}
-            renderItem={(props) => {
-              const { item: setId, index } =
-                props as MyListRenderItemInfo<string>;
-              return (
+            renderItem={({ item: setId, index }) => (
                 <SetEditor
                   index={index}
                   set={form.sets[setId]}
                   handleEditSet={handleEditSet}
                 />
-              );
-            }}
+              )
+            }
             ItemSeparatorComponent={() => <View className="h-1"></View>}
             ListHeaderComponent={() => (
               <View className="flex flex-row justify-between items-center space-x-2 mb-2">
@@ -617,10 +608,7 @@ const Editor = () => {
       <KeyboardAwareFlatList
         data={form.workout.exerciseIds}
         keyExtractor={(exerciseId) => exerciseId}
-        renderItem={(props) => {
-          const { item: exerciseId } = props as MyListRenderItemInfo<string>;
-          return <EditorCard exercise={form.exercises[exerciseId]} />;
-        }}
+        renderItem={({ item: exerciseId }) => <EditorCard exercise={form.exercises[exerciseId]} /> }
         keyboardShouldPersistTaps="handled"
         keyboardOpeningTime={425}
         extraScrollHeight={64}

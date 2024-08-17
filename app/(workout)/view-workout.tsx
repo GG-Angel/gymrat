@@ -27,7 +27,6 @@ import {
 import { SQLiteDatabase, useSQLiteContext } from "expo-sqlite";
 import { formatTime } from "../../utils/format";
 import CustomButton from "../../components/CustomButton";
-import { MyListRenderItemInfo } from "@/utils/types";
 
 interface ViewWorkoutContextValue {
   fullWorkout: UsableRoutine | null;
@@ -141,16 +140,13 @@ const ExerciseCard: React.FC<{ exercise: UsableExercise }> = ({ exercise }) => {
                 className="flex-row flex-wrap mt-2 mb-[-4px]"
                 data={exercise.tags}
                 keyExtractor={(item) => item}
-                renderItem={(props) => {
-                  const { item: tag } = props as MyListRenderItemInfo<string>;
-                  return (
-                    <View className="bg-white-100 py-1 px-2.5 rounded-xl mr-1 mb-1">
-                      <Text className="text-gray font-gregular text-ctri">
-                        {tag}
-                      </Text>
-                    </View>
-                  );
-                }}
+                renderItem={({ item: tag }) => (
+                  <View className="bg-white-100 py-1 px-2.5 rounded-xl mr-1 mb-1">
+                    <Text className="text-gray font-gregular text-ctri">
+                      {tag}
+                    </Text>
+                  </View>
+                )}
                 scrollEnabled={false}
               />
             </View>
@@ -165,13 +161,7 @@ const ExerciseCard: React.FC<{ exercise: UsableExercise }> = ({ exercise }) => {
           <FlatList
             data={exercise.setIds}
             keyExtractor={(setId) => setId}
-            renderItem={(props) => {
-              const { item: setId, index } =
-                props as MyListRenderItemInfo<string>;
-              return (
-                <ExerciseCardSet set={fullWorkout.sets[setId]} index={index} />
-              );
-            }}
+            renderItem={({ item: setId, index }) => <ExerciseCardSet set={fullWorkout.sets[setId]} index={index} /> }
             ItemSeparatorComponent={() => <View className="h-1"></View>}
             ListHeaderComponent={() => (
               <View className="flex flex-row justify-between items-center space-x-2 mb-2">
@@ -229,13 +219,7 @@ const ViewWorkoutPage = () => {
             className="mt-3"
             data={fullWorkout.workout.exerciseIds}
             keyExtractor={(exerciseId) => exerciseId}
-            renderItem={(props) => {
-              const { item: exerciseId } =
-                props as MyListRenderItemInfo<string>;
-              return (
-                <ExerciseCard exercise={fullWorkout.exercises[exerciseId]} />
-              );
-            }}
+            renderItem={({ item: exerciseId }) => <ExerciseCard exercise={fullWorkout.exercises[exerciseId]} /> }
             ItemSeparatorComponent={() => <View className="h-4"></View>}
             contentContainerStyle={{ paddingBottom: 200 }}
           />

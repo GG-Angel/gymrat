@@ -28,7 +28,6 @@ import { UsableRoutine } from "@/database/database";
 import { SvgProps } from "react-native-svg";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { calculateWeightPotential } from "@/utils/calculations";
-import { MyListRenderItemInfo } from "@/utils/types";
 import { BlurView } from "expo-blur";
 
 interface WorkoutState extends UsableRoutine {
@@ -555,32 +554,25 @@ const OneRepMaxCalculator: React.FC<{ containerStyles?: string }> = ({
           </View>
         )}
         ItemSeparatorComponent={() => <View className="h-1"></View>}
-        renderItem={(props) => {
-          const { item } = props as MyListRenderItemInfo<{
-            percentage: number;
-            weight: number;
-            reps: number;
-          }>;
-          return (
-            <View className="flex-row space-x-2">
-              <View className="flex-[0.24] bg-white-100 py-1 rounded-md">
-                <Text className="text-gray font-gregular text-cbody text-center">
-                  {item.percentage}%
-                </Text>
-              </View>
-              <View className="flex-[0.38] bg-white-100 py-1 rounded-md">
-                <Text className="text-gray font-gregular text-cbody text-center">
-                  {item.weight}
-                </Text>
-              </View>
-              <View className="flex-[0.38] bg-white-100 py-1 rounded-md">
-                <Text className="text-gray font-gregular text-cbody text-center">
-                  {item.reps}
-                </Text>
-              </View>
+        renderItem={({ item }) => (
+          <View className="flex-row space-x-2">
+            <View className="flex-[0.24] bg-white-100 py-1 rounded-md">
+              <Text className="text-gray font-gregular text-cbody text-center">
+                {item.percentage}%
+              </Text>
             </View>
-          );
-        }}
+            <View className="flex-[0.38] bg-white-100 py-1 rounded-md">
+              <Text className="text-gray font-gregular text-cbody text-center">
+                {item.weight}
+              </Text>
+            </View>
+            <View className="flex-[0.38] bg-white-100 py-1 rounded-md">
+              <Text className="text-gray font-gregular text-cbody text-center">
+                {item.reps}
+              </Text>
+            </View>
+          </View>
+        )}
       />
       <View>
         <Text className="text-gray-100 font-gregular text-ctri">

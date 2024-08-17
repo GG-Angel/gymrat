@@ -24,7 +24,6 @@ import { SQLiteDatabase, useSQLiteContext } from "expo-sqlite";
 import { formatDays, formatTags, splitField } from "../../utils/format";
 import { useFocusEffect } from "@react-navigation/native";
 import { FetchedWorkout } from "@/database/database";
-import { MyListRenderItemInfo } from "@/utils/types";
 import { calculateWeightPotential } from "@/utils/calculations";
 
 interface HomeContextValues {
@@ -198,21 +197,18 @@ const FilterBar: React.FC = () => {
       <FlatList
         data={state.unselectedFilters}
         keyExtractor={(item) => item}
-        renderItem={(props) => {
-          const { item: filter } = props as MyListRenderItemInfo<string>;
-          return (
-            <TouchableOpacity
-              className="bg-white px-3 py-1 rounded-xl mr-1"
-              onPress={() =>
-                dispatch({ type: "TOGGLE_FILTER", filter: filter })
-              }
-            >
-              <Text className="text-gray font-gregular text-cbody">
-                {filter}
-              </Text>
-            </TouchableOpacity>
-          );
-        }}
+        renderItem={({ item: filter }) => (
+          <TouchableOpacity
+            className="bg-white px-3 py-1 rounded-xl mr-1"
+            onPress={() =>
+              dispatch({ type: "TOGGLE_FILTER", filter: filter })
+            }
+          >
+            <Text className="text-gray font-gregular text-cbody">
+              {filter}
+            </Text>
+          </TouchableOpacity>
+        )}
         horizontal
         showsHorizontalScrollIndicator={false}
       />
@@ -221,21 +217,18 @@ const FilterBar: React.FC = () => {
           <FlatList
             data={state.selectedFilters}
             keyExtractor={(item) => item}
-            renderItem={(props) => {
-              const { item: filter } = props as MyListRenderItemInfo<string>;
-              return (
-                <TouchableOpacity
-                  className="bg-primary px-3 py-1 rounded-xl mr-1"
-                  onPress={() =>
-                    dispatch({ type: "TOGGLE_FILTER", filter: filter })
-                  }
-                >
-                  <Text className="text-white font-gsemibold text-cbody">
-                    {filter}
-                  </Text>
-                </TouchableOpacity>
-              );
-            }}
+            renderItem={({ item: filter }) => (
+              <TouchableOpacity
+                className="bg-primary px-3 py-1 rounded-xl mr-1"
+                onPress={() =>
+                  dispatch({ type: "TOGGLE_FILTER", filter: filter })
+                }
+              >
+                <Text className="text-white font-gsemibold text-cbody">
+                  {filter}
+                </Text>
+              </TouchableOpacity>
+            )}
             horizontal
             showsHorizontalScrollIndicator={false}
           />
@@ -274,8 +267,7 @@ const WorkoutCard: React.FC<{ workout: FormattedWorkout }> = ({ workout }) => {
             className="flex-row flex-wrap mt-2 mb-[-4px]"
             data={workout.tags}
             keyExtractor={(item) => item}
-            renderItem={(props) => {
-              const { item: tag } = props as MyListRenderItemInfo<string>;
+            renderItem={({ item: tag }) => {
               return (
                 <View
                   className={`${state.selectedFilters.includes(tag) ? "bg-secondary" : "bg-white-100"} py-1 px-2.5 rounded-xl mr-1 mb-1`}
@@ -337,10 +329,7 @@ const HomePage = () => {
         }}
         data={state.workouts}
         keyExtractor={(item) => item._id}
-        renderItem={(props) => {
-          const { item: workout } = props as MyListRenderItemInfo<FormattedWorkout>;
-          return <WorkoutCard workout={workout} />;
-        }}
+        renderItem={({ item: workout }) => <WorkoutCard workout={workout} /> }
         ItemSeparatorComponent={() => <View className="h-[12px]"></View>}
         ListEmptyComponent={() => (
           <View className="flex-1 justify-center items-center">
