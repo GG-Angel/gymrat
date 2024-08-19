@@ -31,7 +31,7 @@ export function calculateWeightPotential(
       "Weight or reps cannot be below zero when calculating weight potential."
     );
   }
-
+  
   const oneRepMax = calculateOneRepMax(weight, reps);
   const repsToShow = [1, 2, 4, 6, 8, 10, 12, 16, 20, 25, 30];
   const weightPotentialSheet: {

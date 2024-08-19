@@ -29,7 +29,7 @@ import {
   EditableRoutine,
   EditableSet,
   generateUUID,
-  saveNewWorkout,
+  saveNewRoutine,
 } from "@/database/database";
 import { useSQLiteContext } from "expo-sqlite";
 import { splitField } from "@/utils/format";
@@ -511,13 +511,12 @@ const EditorCard: React.FC<{ exercise: EditableExercise }> = ({ exercise }) => {
             data={exercise.setIds}
             keyExtractor={(setId) => setId}
             renderItem={({ item: setId, index }) => (
-                <SetEditor
-                  index={index}
-                  set={form.sets[setId]}
-                  handleEditSet={handleEditSet}
-                />
-              )
-            }
+              <SetEditor
+                index={index}
+                set={form.sets[setId]}
+                handleEditSet={handleEditSet}
+              />
+            )}
             ItemSeparatorComponent={() => <View className="h-1"></View>}
             ListHeaderComponent={() => (
               <View className="flex flex-row justify-between items-center space-x-2 mb-2">
@@ -595,7 +594,7 @@ const Editor = () => {
     } else if (form.workout.exerciseIds.length === 0) {
       Alert.alert("Invalid Details", "You must have at least one exercise");
     } else {
-      await saveNewWorkout(db, form);
+      await saveNewRoutine(db, form);
       Alert.alert("Workout Saved!");
       router.back();
     }
@@ -608,7 +607,9 @@ const Editor = () => {
       <KeyboardAwareFlatList
         data={form.workout.exerciseIds}
         keyExtractor={(exerciseId) => exerciseId}
-        renderItem={({ item: exerciseId }) => <EditorCard exercise={form.exercises[exerciseId]} /> }
+        renderItem={({ item: exerciseId }) => (
+          <EditorCard exercise={form.exercises[exerciseId]} />
+        )}
         keyboardShouldPersistTaps="handled"
         keyboardOpeningTime={425}
         extraScrollHeight={64}

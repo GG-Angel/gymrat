@@ -19,17 +19,17 @@ import { Icons } from "../../constants";
 import Divider from "../../components/Divider";
 import CardContainer from "../../components/CardContainer";
 import {
-  fetchFullWorkout,
-  UsableRoutine,
-  UsableExercise,
-  UsableSet,
+  getViewableRoutine,
+  ViewableRoutine,
+  ViewableExercise,
+  ViewableSet,
 } from "../../database/database";
 import { SQLiteDatabase, useSQLiteContext } from "expo-sqlite";
 import { formatTime } from "../../utils/format";
 import CustomButton from "../../components/CustomButton";
 
 interface ViewWorkoutContextValue {
-  fullWorkout: UsableRoutine | null;
+  fullWorkout: ViewableRoutine | null;
 }
 
 const ViewWorkoutContext = createContext<ViewWorkoutContextValue>(
@@ -39,13 +39,13 @@ const ViewWorkoutContext = createContext<ViewWorkoutContextValue>(
 const ViewWorkoutProvider: React.FC<PropsWithChildren> = ({ children }) => {
   const db: SQLiteDatabase = useSQLiteContext();
   const params = useLocalSearchParams();
-  const [fullWorkout, setFullWorkout] = useState<UsableRoutine | null>(null);
+  const [fullWorkout, setFullWorkout] = useState<ViewableRoutine | null>(null);
 
   const contextValue = useMemo(() => ({ fullWorkout }), [fullWorkout]);
 
   useEffect(() => {
     const getFullWorkout = async () => {
-      const workout: UsableRoutine = await fetchFullWorkout(
+      const workout: ViewableRoutine = await getViewableRoutine(
         db,
         params._id as string
       );
@@ -85,7 +85,7 @@ const setTypeStyles = {
   },
 };
 
-const ExerciseCardSet: React.FC<{ set: UsableSet; index: number }> = ({
+const ExerciseCardSet: React.FC<{ set: ViewableSet; index: number }> = ({
   set,
   index,
 }) => {
@@ -118,7 +118,9 @@ const ExerciseCardSet: React.FC<{ set: UsableSet; index: number }> = ({
   );
 };
 
-const ExerciseCard: React.FC<{ exercise: UsableExercise }> = ({ exercise }) => {
+const ExerciseCard: React.FC<{ exercise: ViewableExercise }> = ({
+  exercise,
+}) => {
   const { fullWorkout } = useContext(ViewWorkoutContext);
   const [isExpanded, setIsExpanded] = useState(false);
 
@@ -161,7 +163,9 @@ const ExerciseCard: React.FC<{ exercise: UsableExercise }> = ({ exercise }) => {
           <FlatList
             data={exercise.setIds}
             keyExtractor={(setId) => setId}
-            renderItem={({ item: setId, index }) => <ExerciseCardSet set={fullWorkout.sets[setId]} index={index} /> }
+            renderItem={({ item: setId, index }) => (
+              <ExerciseCardSet set={fullWorkout.sets[setId]} index={index} />
+            )}
             ItemSeparatorComponent={() => <View className="h-1"></View>}
             ListHeaderComponent={() => (
               <View className="flex flex-row justify-between items-center space-x-2 mb-2">
@@ -219,7 +223,9 @@ const ViewWorkoutPage = () => {
             className="mt-3"
             data={fullWorkout.workout.exerciseIds}
             keyExtractor={(exerciseId) => exerciseId}
-            renderItem={({ item: exerciseId }) => <ExerciseCard exercise={fullWorkout.exercises[exerciseId]} /> }
+            renderItem={({ item: exerciseId }) => (
+              <ExerciseCard exercise={fullWorkout.exercises[exerciseId]} />
+            )}
             ItemSeparatorComponent={() => <View className="h-4"></View>}
             contentContainerStyle={{ paddingBottom: 200 }}
           />

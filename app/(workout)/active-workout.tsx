@@ -24,13 +24,13 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import Icons from "@/constants/icons";
 import CardContainer from "@/components/CardContainer";
 import { formatTime, parseDecimal, parseWhole } from "@/utils/format";
-import { UsableRoutine } from "@/database/database";
+import { ViewableRoutine } from "@/database/database";
 import { SvgProps } from "react-native-svg";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { calculateWeightPotential } from "@/utils/calculations";
 import { BlurView } from "expo-blur";
 
-interface WorkoutState extends UsableRoutine {
+interface WorkoutState extends ViewableRoutine {
   exerciseIndex: number;
   setIndex: number;
   elapsedSets: number;
@@ -200,7 +200,7 @@ function workoutReducer(state: WorkoutState, action: ReducerAction) {
 
 const WorkoutProvider: React.FC<PropsWithChildren> = ({ children }) => {
   const params = useLocalSearchParams();
-  const fullWorkout: UsableRoutine = JSON.parse(params.jsonWorkout as string);
+  const fullWorkout: ViewableRoutine = JSON.parse(params.jsonWorkout as string);
 
   const [state, dispatch] = useReducer(workoutReducer, {
     ...fullWorkout,
@@ -492,6 +492,7 @@ const Notes: React.FC<{ containerStyles?: string }> = ({ containerStyles }) => {
             })
           }
           placeholder="Enter exercise notes here"
+          placeholderTextColor="#BABABA"
           multiline={true}
           numberOfLines={4}
         />
