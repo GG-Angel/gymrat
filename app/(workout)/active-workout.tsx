@@ -633,6 +633,7 @@ const TabBar: React.FC = () => {
       />
       <TabBarIcon
         Icon={Icons.tabRight}
+        disabled={state.isFinished}
         handlePress={() => dispatch({ type: "NEXT_SET" })}
       />
     </View>

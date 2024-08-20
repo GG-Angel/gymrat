@@ -211,14 +211,9 @@ const ViewWorkoutPage = () => {
       <Divider />
       {fullWorkout && (
         <>
-          <View className="flex-row justify-between items-start space-x-2">
-            <Text className="text-gray font-gregular text-csub">
-              {fullWorkout.workout.name}
-            </Text>
-            <TouchableOpacity onPress={() => {}}>
-              <Icons.editLarge />
-            </TouchableOpacity>
-          </View>
+          <Text className="text-gray font-gregular text-csub">
+            {fullWorkout.workout.name}
+          </Text>
           <FlatList
             className="mt-3"
             data={fullWorkout.workout.exerciseIds}
