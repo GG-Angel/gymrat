@@ -24,17 +24,23 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import Icons from "@/constants/icons";
 import CardContainer from "@/components/CardContainer";
 import { formatTime, parseDecimal, parseWhole } from "@/utils/format";
-import { ViewableRoutine } from "@/database/database";
+import {
+  EditableRoutine,
+  updateRoutine,
+  ViewableRoutine,
+} from "@/database/database";
 import { SvgProps } from "react-native-svg";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { calculateWeightPotential } from "@/utils/calculations";
 import { BlurView } from "expo-blur";
+import { useSQLiteContext } from "expo-sqlite";
 
 interface WorkoutState extends ViewableRoutine {
   exerciseIndex: number;
   setIndex: number;
   elapsedSets: number;
   workoutLength: number;
+  isFinished: boolean;
 }
 
 interface WorkoutContextValues {
@@ -143,13 +149,8 @@ function workoutReducer(state: WorkoutState, action: ReducerAction) {
 
       if (isLastSet) {
         if (isLastExercise) {
-          // workout finished, repeat
-          return {
-            ...state,
-            exerciseIndex: 0,
-            setIndex: 0,
-            elapsedSets: 0,
-          };
+          // workout finished, update flag
+          return { ...state, isFinished: true };
         } else {
           // go to next exercise
           return {
@@ -208,6 +209,7 @@ const WorkoutProvider: React.FC<PropsWithChildren> = ({ children }) => {
     setIndex: 0, // corresponds to exercise.setIds index
     elapsedSets: 0,
     workoutLength: calculateWorkoutLength(), // calculates the number of total sets in the workout
+    isFinished: false,
   });
 
   const [currentExercise, setCurrentExercise] =
@@ -638,6 +640,7 @@ const TabBar: React.FC = () => {
 };
 
 const InProgressWorkoutPage: React.FC = () => {
+  const db = useSQLiteContext();
   const {
     state,
     dispatch,
@@ -654,6 +657,13 @@ const InProgressWorkoutPage: React.FC = () => {
       notes: true,
     });
   }, [state.exerciseIndex]);
+
+  useEffect(() => {
+    if (state.isFinished) {
+      updateRoutine(db, state);
+      router.navigate("/home");
+    }
+  }, [state.isFinished]);
 
   const handleChangeValue = (
     field: "weight" | "reps",

@@ -315,7 +315,7 @@ export const saveNewRoutine = async (
  */
 export const updateRoutine = async (
   db: SQLiteDatabase,
-  routine: EditableRoutine
+  routine: ViewableRoutine
 ): Promise<void> => {
   const { workout, exercises, sets } = routine;
 
@@ -343,7 +343,7 @@ export const updateRoutine = async (
  */
 const updateWorkout = async (
   db: SQLiteDatabase,
-  workout: EditableWorkout
+  workout: ViewableWorkout
 ): Promise<void> => {
   const { _id, name, days } = workout;
 
@@ -362,7 +362,7 @@ const updateWorkout = async (
  */
 const updateExercise = async (
   db: SQLiteDatabase,
-  exercise: EditableExercise
+  exercise: ViewableExercise
 ): Promise<void> => {
   const { _id, rest, notes } = exercise;
 
@@ -381,7 +381,7 @@ const updateExercise = async (
  */
 const updateSet = async (
   db: SQLiteDatabase,
-  set: EditableSet
+  set: ViewableSet
 ): Promise<void> => {
   const { _id, type, weight, reps } = set;
 
