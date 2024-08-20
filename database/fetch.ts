@@ -63,8 +63,11 @@ export async function fetchWorkout(
     throw new Error(`Could not find a Workout with an ID of ${workoutId}.`);
   }
 
+  const exercises: Exercise[] = await fetchExercisesFromWorkout(db, workoutId);
+
   return {
     ...workout,
+    exerciseIds: exercises.map(e => e._id),
     days: splitField(workout.days),
     tags: splitField(workout.tags),
   };
@@ -89,12 +92,21 @@ export async function fetchExercise(
     throw new Error(`Could not find an Exercise with an ID of ${exerciseId}.`);
   }
 
+  const sets: ExerciseSet[] = await fetchSetsFromExercise(db, exercise.workout_id);
+
   return {
     ...exercise,
+    setIds: sets.map(s => s._id),
     tags: splitField(exercise.tags),
   };
 }
 
+/**
+ * Fetches all exercises related to a particular workout.
+ * @param db The database.
+ * @param workoutId The id of the workout that has the exercises we want to get.
+ * @returns An array of normalized exercises related to the workout.
+ */
 export async function fetchExercisesFromWorkout(
   db: SQLiteDatabase,
   workoutId: string
@@ -110,10 +122,18 @@ export async function fetchExercisesFromWorkout(
     );
   }
 
-  return exercises.map((exercise) => ({
-    ...exercise,
-    tags: splitField(exercise.tags),
-  }));
+  const normalizedExercises: Exercise[] = await Promise.all(
+    exercises.map(async (exercise) => {
+      const sets: ExerciseSet[] = await fetchSetsFromExercise(db, exercise._id); // use exercise._id for fetching sets
+      return {
+        ...exercise,
+        setIds: sets.map(s => s._id),
+        tags: splitField(exercise.tags),
+      };
+    })
+  );
+
+  return normalizedExercises;
 }
 
 /**
