@@ -233,7 +233,7 @@ export async function fetchMasterExercise(
 export async function searchMasterExercise(db: SQLiteDatabase, query: string): Promise<MasterExercise[]> {
   const results: FetchedMasterExercise[] = await db.getAllAsync(
     "SELECT * FROM MasterExercise WHERE name LIKE ? LIMIT 5",
-    query
+    `%${query}%`
   );
   return results.map(result => ({ ...result, muscles: splitField(result.muscles) }));
 }

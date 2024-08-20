@@ -29,6 +29,7 @@ import { parseWhole, splitField } from "@/utils/format";
 import { DayOfWeek, Exercise, ExerciseSet, Routine } from "@/utils/types";
 import { generateUUID } from "@/database/setup";
 import { insertRoutine } from "@/database/insert";
+import { parse } from "@babel/core";
 
 interface EditWorkoutContextValues {
   routine: Routine;
@@ -535,8 +536,8 @@ const EditorCard: React.FC<{ exercise: Exercise }> = ({ exercise }) => {
               <TextInput
                 className="flex-1 text-gray font-gregular text-cbody text-center"
                 keyboardType="numeric"
-                value={String(exercise.rest ?? "")}
-                placeholder={"N/A"}
+                value={exercise.rest === 0 ? "" : String(exercise.rest)}
+                placeholder="0"
                 placeholderTextColor="#BABABA"
                 onChangeText={handleEditRest}
                 maxLength={4}
