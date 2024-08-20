@@ -18,18 +18,14 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Icons } from "../../constants";
 import Divider from "../../components/Divider";
 import CardContainer from "../../components/CardContainer";
-import {
-  getRoutine,
-  ViewableRoutine,
-  ViewableExercise,
-  ViewableSet,
-} from "../../database/database";
 import { SQLiteDatabase, useSQLiteContext } from "expo-sqlite";
 import { formatTime } from "../../utils/format";
 import CustomButton from "../../components/CustomButton";
+import { Exercise, ExerciseSet, Routine } from "@/utils/types";
+import { fetchRoutine } from "@/database/fetch";
 
 interface ViewWorkoutContextValue {
-  fullWorkout: ViewableRoutine | null;
+  routine: Routine | null;
 }
 
 const ViewWorkoutContext = createContext<ViewWorkoutContextValue>(
@@ -39,17 +35,14 @@ const ViewWorkoutContext = createContext<ViewWorkoutContextValue>(
 const ViewWorkoutProvider: React.FC<PropsWithChildren> = ({ children }) => {
   const db: SQLiteDatabase = useSQLiteContext();
   const params = useLocalSearchParams();
-  const [fullWorkout, setFullWorkout] = useState<ViewableRoutine | null>(null);
+  const [routine, setRoutine] = useState<Routine | null>(null);
 
-  const contextValue = useMemo(() => ({ fullWorkout }), [fullWorkout]);
+  const contextValue = useMemo(() => ({ routine }), [routine]);
 
   useEffect(() => {
     const getFullWorkout = async () => {
-      const workout: ViewableRoutine = await getRoutine(
-        db,
-        params._id as string
-      );
-      setFullWorkout(workout);
+      const workout: Routine = await fetchRoutine(db, params._id as string);
+      setRoutine(workout);
     };
 
     getFullWorkout();
@@ -85,7 +78,7 @@ const setTypeStyles = {
   },
 };
 
-const ExerciseCardSet: React.FC<{ set: ViewableSet; index: number }> = ({
+const ExerciseCardSet: React.FC<{ set: ExerciseSet; index: number }> = ({
   set,
   index,
 }) => {
@@ -118,10 +111,10 @@ const ExerciseCardSet: React.FC<{ set: ViewableSet; index: number }> = ({
   );
 };
 
-const ExerciseCard: React.FC<{ exercise: ViewableExercise }> = ({
+const ExerciseCard: React.FC<{ exercise: Exercise }> = ({
   exercise,
 }) => {
-  const { fullWorkout } = useContext(ViewWorkoutContext);
+  const { routine } = useContext(ViewWorkoutContext);
   const [isExpanded, setIsExpanded] = useState(false);
 
   return (
@@ -158,13 +151,13 @@ const ExerciseCard: React.FC<{ exercise: ViewableExercise }> = ({
           </View>
         </CardContainer>
       </TouchableOpacity>
-      {isExpanded && fullWorkout && (
+      {isExpanded && routine && (
         <CardContainer containerStyles="rounded-t-none">
           <FlatList
             data={exercise.setIds}
             keyExtractor={(setId) => setId}
             renderItem={({ item: setId, index }) => (
-              <ExerciseCardSet set={fullWorkout.sets[setId]} index={index} />
+              <ExerciseCardSet set={routine.sets[setId]} index={index} />
             )}
             ItemSeparatorComponent={() => <View className="h-1"></View>}
             ListHeaderComponent={() => (
@@ -193,7 +186,7 @@ const ExerciseCard: React.FC<{ exercise: ViewableExercise }> = ({
 };
 
 const ViewWorkoutPage = () => {
-  const { fullWorkout } = useContext(ViewWorkoutContext);
+  const { routine } = useContext(ViewWorkoutContext);
 
   return (
     <View className="flex-1">
@@ -202,24 +195,26 @@ const ViewWorkoutPage = () => {
           <TouchableOpacity onPress={() => router.back()}>
             <Icons.crumbtrail />
           </TouchableOpacity>
-          <Text className="text-secondary font-gbold text-ch1">Workout</Text>
+          <Text className="text-secondary font-gbold text-ch1">
+            Workout
+          </Text>
         </View>
         <TouchableOpacity onPress={() => {}}>
           <Icons.hamburger />
         </TouchableOpacity>
       </View>
       <Divider />
-      {fullWorkout && (
+      {routine && (
         <>
           <Text className="text-gray font-gregular text-csub">
-            {fullWorkout.workout.name}
+            {routine.workout.name}
           </Text>
           <FlatList
             className="mt-3"
-            data={fullWorkout.workout.exerciseIds}
+            data={routine.workout.exerciseIds}
             keyExtractor={(exerciseId) => exerciseId}
             renderItem={({ item: exerciseId }) => (
-              <ExerciseCard exercise={fullWorkout.exercises[exerciseId]} />
+              <ExerciseCard exercise={routine.exercises[exerciseId]} />
             )}
             ItemSeparatorComponent={() => <View className="h-4"></View>}
             contentContainerStyle={{ paddingBottom: 200 }}
@@ -233,7 +228,7 @@ const ViewWorkoutPage = () => {
           handlePress={() =>
             router.push({
               pathname: "/active-workout",
-              params: { jsonWorkout: JSON.stringify(fullWorkout) }, // for some reason we need to do this
+              params: { jsonWorkout: JSON.stringify(routine) }, // for some reason we need to do this
             })
           }
         />
