@@ -24,18 +24,28 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import Icons from "@/constants/icons";
 import CardContainer from "@/components/CardContainer";
 import { formatTime, parseDecimal, parseWhole } from "@/utils/format";
-import {
-  EditableRoutine,
-  updateRoutine,
-  ViewableRoutine,
-} from "@/database/database";
 import { SvgProps } from "react-native-svg";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { calculateWeightPotential } from "@/utils/calculations";
 import { BlurView } from "expo-blur";
 import { useSQLiteContext } from "expo-sqlite";
+import { Exercise, ExerciseSet, Routine, SetType } from "@/utils/types";
+import { updateRoutine } from "@/database/update";
 
-interface WorkoutState extends ViewableRoutine {
+interface IsOpenedState {
+  calculator: boolean;
+  timer: boolean;
+  notes: boolean;
+}
+
+type SetTypeColors = {
+  Standard: string;
+  "Warm-up": string;
+  Drop: string;
+  Failure: string;
+};
+
+interface WorkoutState extends Routine {
   exerciseIndex: number;
   setIndex: number;
   elapsedSets: number;
@@ -46,8 +56,8 @@ interface WorkoutState extends ViewableRoutine {
 interface WorkoutContextValues {
   state: WorkoutState;
   dispatch: Dispatch<ReducerAction>;
-  currentExercise: CurrentExercise;
-  currentSet: CurrentSet;
+  currentExercise: Exercise;
+  currentSet: ExerciseSet;
   setTypeColorsRef: React.MutableRefObject<SetTypeColors>;
   isOpened: IsOpenedState;
   setIsOpened: Dispatch<SetStateAction<IsOpenedState>>;
@@ -69,38 +79,6 @@ type ReducerAction =
       weight?: number;
       reps?: number;
     };
-
-interface IsOpenedState {
-  calculator: boolean;
-  timer: boolean;
-  notes: boolean;
-}
-
-type CurrentExercise = {
-  _id: string;
-  master_id: string | null;
-  name: string;
-  rest: number;
-  notes: string;
-  tags: string[];
-  setIds: string[];
-};
-
-type CurrentSet = {
-  _id: string;
-  type: "Standard" | "Warm-up" | "Drop" | "Failure";
-  weight: number | null;
-  reps: number | null;
-};
-
-type SetTypeColors = {
-  Standard: string;
-  "Warm-up": string;
-  Drop: string;
-  Failure: string;
-};
-
-type SetTypes = "Standard" | "Warm-up" | "Drop" | "Failure";
 
 const WorkoutContext = createContext<WorkoutContextValues>(
   {} as WorkoutContextValues
@@ -182,7 +160,6 @@ function workoutReducer(state: WorkoutState, action: ReducerAction) {
       };
 
     case "CHANGE_SET_VALUE":
-      // console.log("ACTION:", JSON.stringify(action, null, 2));
       return {
         ...state,
         sets: {
@@ -201,10 +178,10 @@ function workoutReducer(state: WorkoutState, action: ReducerAction) {
 
 const WorkoutProvider: React.FC<PropsWithChildren> = ({ children }) => {
   const params = useLocalSearchParams();
-  const fullWorkout: ViewableRoutine = JSON.parse(params.jsonWorkout as string);
+  const routine: Routine = JSON.parse(params.jsonWorkout as string);
 
   const [state, dispatch] = useReducer(workoutReducer, {
-    ...fullWorkout,
+    ...routine,
     exerciseIndex: 0, // corresponds to workout.exerciseIds index
     setIndex: 0, // corresponds to exercise.setIds index
     elapsedSets: 0,
@@ -213,8 +190,8 @@ const WorkoutProvider: React.FC<PropsWithChildren> = ({ children }) => {
   });
 
   const [currentExercise, setCurrentExercise] =
-    useState<CurrentExercise>(getCurrentExercise());
-  const [currentSet, setCurrentSet] = useState<CurrentSet>(getCurrentSet());
+    useState<Exercise>(getCurrentExercise());
+  const [currentSet, setCurrentSet] = useState<ExerciseSet>(getCurrentSet());
   const [isOpened, setIsOpened] = useState<IsOpenedState>({
     calculator: false,
     timer: false,
@@ -239,17 +216,17 @@ const WorkoutProvider: React.FC<PropsWithChildren> = ({ children }) => {
   }, [state.sets[currentSet._id], state.setIndex]);
 
   function calculateWorkoutLength(): number {
-    return fullWorkout.workout.exerciseIds.reduce((totalSets, exerciseId) => {
-      const exercise = fullWorkout.exercises[exerciseId];
+    return routine.workout.exerciseIds.reduce((totalSets, exerciseId) => {
+      const exercise = routine.exercises[exerciseId];
       return totalSets + exercise.setIds.length;
     }, 0);
   }
 
-  function getCurrentExercise(): CurrentExercise {
+  function getCurrentExercise(): Exercise {
     return state.exercises[state.workout.exerciseIds[state.exerciseIndex]];
   }
 
-  function getCurrentSet(): CurrentSet {
+  function getCurrentSet(): ExerciseSet {
     return state.sets[getCurrentExercise().setIds[state.setIndex]];
   }
 
@@ -307,7 +284,7 @@ const ProgressBar = () => {
   );
 };
 
-const SetTypeIndicator: React.FC<{ type: SetTypes }> = ({ type }) => {
+const SetTypeIndicator: React.FC<{ type: SetType }> = ({ type }) => {
   const { setTypeColorsRef } = useContext(WorkoutContext);
   return (
     <View
@@ -329,14 +306,13 @@ const Counter: React.FC<{
   containerStyles?: string;
 }> = ({ field, value, handleChangeValue, containerStyles }) => {
   const { currentSet } = useContext(WorkoutContext);
-  const [localValue, setLocalValue] = useState<string>(
-    value ? String(value) : ""
-  );
+  const [localValue, setLocalValue] = useState<string>(String(value ?? ""));
   const [addDisabled, setAddDisabled] = useState<boolean>(false);
   const [subtractDisabled, setSubtractDisabled] = useState<boolean>(false);
 
+  // refresh value when the set changes
   useEffect(() => {
-    setLocalValue(value ? String(value) : "");
+    setLocalValue(String(value ?? ""));
   }, [currentSet]);
 
   useEffect(() => {

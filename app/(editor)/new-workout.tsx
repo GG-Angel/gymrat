@@ -24,19 +24,15 @@ import { KeyboardAwareFlatList } from "react-native-keyboard-aware-scroll-view";
 import CardContainer from "@/components/CardContainer";
 import CustomButton from "@/components/CustomButton";
 import { router } from "expo-router";
-import {
-  EditableExercise,
-  EditableRoutine,
-  EditableSet,
-  generateUUID,
-  saveNewRoutine,
-} from "@/database/database";
 import { useSQLiteContext } from "expo-sqlite";
-import { splitField } from "@/utils/format";
-import { DayOfWeek } from "@/utils/types";
+import { parseWhole, splitField } from "@/utils/format";
+import { DayOfWeek, Exercise, ExerciseSet, Routine } from "@/utils/types";
+import { generateUUID } from "@/database/setup";
+import { insertRoutine } from "@/database/insert";
+import { parse } from "@babel/core";
 
 interface EditWorkoutContextValues {
-  form: EditableRoutine;
+  routine: Routine;
   dispatch: React.Dispatch<ReducerAction>;
 }
 
@@ -51,16 +47,11 @@ type ReducerAction =
     }
   | {
       type: "ADD_EXERCISE";
-      exercise: {
-        _id: string;
-        master_id?: string;
-        name: string;
-        tags: string;
-      };
+      exercise: Pick<Exercise, "_id" | "master_id" | "name" | "tags">
     }
   | {
       type: "EDIT_EXERCISE";
-      exercise: EditableExercise;
+      exercise: Exercise;
     }
   | {
       type: "DELETE_EXERCISE";
@@ -69,16 +60,16 @@ type ReducerAction =
   | {
       type: "ADD_SET";
       newSetId: string;
-      exercise: EditableExercise;
+      exercise: Exercise;
     }
   | {
       type: "EDIT_SET";
-      updatedSet: EditableSet;
+      updatedSet: ExerciseSet;
     }
   | {
       type: "REMOVE_SET";
       removeSetId: string;
-      exercise: EditableExercise;
+      exercise: Exercise;
     };
 
 const WorkoutContext = createContext<EditWorkoutContextValues>(
@@ -86,9 +77,9 @@ const WorkoutContext = createContext<EditWorkoutContextValues>(
 );
 
 function workoutReducer(
-  state: EditableRoutine,
+  state: Routine,
   action: ReducerAction
-): EditableRoutine {
+): Routine {
   switch (action.type) {
     case "CHANGE_NAME":
       return {
@@ -120,31 +111,35 @@ function workoutReducer(
           ...state.exercises,
           [action.exercise._id]: {
             _id: action.exercise._id,
+            workout_id: state.workout._id,
             master_id: action.exercise.master_id ?? null, // will be null if exercise is custom
             // an isLinked field could easily determine whether ot not to update other master exercise
-            name: action.exercise.name,
-            rest: "90",
-            notes: "",
-            tags: action.exercise.tags,
             setIds: setIds,
+            name: action.exercise.name,
+            rest: 90,
+            notes: "",
+            tags: action.exercise.tags
           },
         },
         sets: {
           ...state.sets,
           [setIds[0]]: {
             _id: setIds[0],
+            exercise_id: action.exercise._id,
             type: "Warm-up",
             weight: null,
             reps: null,
           },
           [setIds[1]]: {
             _id: setIds[1],
+            exercise_id: action.exercise._id,
             type: "Standard",
             weight: null,
             reps: null,
           },
           [setIds[2]]: {
             _id: setIds[2],
+            exercise_id: action.exercise._id,
             type: "Failure",
             weight: null,
             reps: null,
@@ -193,6 +188,7 @@ function workoutReducer(
           ...state.sets,
           [action.newSetId]: {
             _id: action.newSetId,
+            exercise_id: action.exercise._id,
             type: "Standard",
             weight: null,
             reps: null,
@@ -225,24 +221,21 @@ function workoutReducer(
 }
 
 const WorkoutProvider: React.FC<PropsWithChildren> = ({ children }) => {
-  const [form, dispatch] = useReducer(workoutReducer, {
+  const [routine, dispatch] = useReducer(workoutReducer, {
     workout: {
       _id: generateUUID(),
+      exerciseIds: [],
       name: "",
-      days: [] as string[],
-      exerciseIds: [] as string[],
+      days: [],
+      tags: []
     },
-    exercises: {} as {
-      [exerciseId: string]: EditableExercise;
-    },
-    sets: {} as {
-      [setId: string]: EditableSet;
-    },
+    exercises: {},
+    sets: {}
   });
 
   const contextValue: EditWorkoutContextValues = useMemo(
-    () => ({ form, dispatch }),
-    [form, dispatch]
+    () => ({ routine, dispatch }),
+    [routine, dispatch]
   );
 
   // useEffect(() => {
@@ -280,7 +273,7 @@ const DayToggle: React.FC<{
 };
 
 const DaySelecter = () => {
-  const { form, dispatch } = useContext(WorkoutContext);
+  const { routine: form, dispatch } = useContext(WorkoutContext);
   const daysOfWeek = useRef([
     "Sunday",
     "Monday",
@@ -354,8 +347,8 @@ const SetTypeEditor: React.FC<{
 
 const SetEditor: React.FC<{
   index: number;
-  set: EditableSet;
-  handleEditSet: (updatedSet: EditableSet) => void;
+  set: ExerciseSet;
+  handleEditSet: (updatedSet: ExerciseSet) => void;
 }> = ({ index, set, handleEditSet }) => {
   const setTypes = useRef(["Standard", "Warm-up", "Drop", "Failure"]);
 
@@ -393,7 +386,7 @@ const SetEditor: React.FC<{
         <TextInput
           className="flex-1 text-gray font-gregular text-cbody text-center"
           keyboardType="numeric"
-          value={set.weight ?? ""}
+          value={String(set.weight ?? "")}
           placeholder={"N/A"}
           placeholderTextColor="#BABABA"
           onChangeText={(w) => handleEdits("weight", w)}
@@ -407,7 +400,7 @@ const SetEditor: React.FC<{
         <TextInput
           className="flex-1 text-gray font-gregular text-cbody text-center"
           keyboardType="numeric"
-          value={set.reps ?? ""}
+          value={String(set.reps ?? "")}
           placeholder={"N/A"}
           placeholderTextColor="#BABABA"
           onChangeText={(r) => handleEdits("reps", r)}
@@ -419,8 +412,8 @@ const SetEditor: React.FC<{
   );
 };
 
-const EditorCard: React.FC<{ exercise: EditableExercise }> = ({ exercise }) => {
-  const { form, dispatch } = useContext(WorkoutContext);
+const EditorCard: React.FC<{ exercise: Exercise }> = ({ exercise }) => {
+  const { routine: form, dispatch } = useContext(WorkoutContext);
   const [isExpanded, setIsExpanded] = useState(false);
 
   const handleAddSet = () => {
@@ -435,7 +428,7 @@ const EditorCard: React.FC<{ exercise: EditableExercise }> = ({ exercise }) => {
     });
   };
 
-  const handleEditSet = (updatedSet: EditableSet) => {
+  const handleEditSet = (updatedSet: ExerciseSet) => {
     dispatch({
       type: "EDIT_SET",
       updatedSet: updatedSet,
@@ -459,7 +452,7 @@ const EditorCard: React.FC<{ exercise: EditableExercise }> = ({ exercise }) => {
       type: "EDIT_EXERCISE",
       exercise: {
         ...exercise,
-        rest: updatedRest,
+        rest: parseWhole(updatedRest),
       },
     });
   };
@@ -487,7 +480,7 @@ const EditorCard: React.FC<{ exercise: EditableExercise }> = ({ exercise }) => {
               </Text>
               <FlatList
                 className="flex-row flex-wrap mt-2 mb-[-4px]"
-                data={splitField(exercise.tags)}
+                data={exercise.tags}
                 keyExtractor={(item) => item}
                 renderItem={({ item: tag }) => (
                   <View className="bg-white-100 py-1 px-2.5 rounded-xl mr-1 mb-1">
@@ -543,8 +536,8 @@ const EditorCard: React.FC<{ exercise: EditableExercise }> = ({ exercise }) => {
               <TextInput
                 className="flex-1 text-gray font-gregular text-cbody text-center"
                 keyboardType="numeric"
-                value={exercise.rest}
-                placeholder={"N/A"}
+                value={exercise.rest === 0 ? "" : String(exercise.rest)}
+                placeholder="0"
                 placeholderTextColor="#BABABA"
                 onChangeText={handleEditRest}
                 maxLength={4}
@@ -583,7 +576,7 @@ const EditorCard: React.FC<{ exercise: EditableExercise }> = ({ exercise }) => {
 
 const Editor = () => {
   const db = useSQLiteContext();
-  const { form, dispatch } = useContext(WorkoutContext);
+  const { routine: form, dispatch } = useContext(WorkoutContext);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async () => {
@@ -594,7 +587,7 @@ const Editor = () => {
     } else if (form.workout.exerciseIds.length === 0) {
       Alert.alert("Invalid Details", "You must have at least one exercise");
     } else {
-      await saveNewRoutine(db, form);
+      await insertRoutine(db, form);
       Alert.alert("Workout Saved!");
       router.back();
     }

@@ -43,7 +43,7 @@ export function calculateWeightPotential(
   repsToShow.forEach((reps) => {
     weightPotentialSheet.push({
       percentage: parseWhole(PERCENTAGE_OF_1RM[reps] * 100),
-      weight: parseDecimal(oneRepMax * PERCENTAGE_OF_1RM[reps]),
+      weight: parseWhole(oneRepMax * PERCENTAGE_OF_1RM[reps]),
       reps: reps,
     });
   });

@@ -7,70 +7,56 @@ import {
   ScrollView,
   Keyboard,
   Alert,
-  ListRenderItemInfo,
 } from "react-native";
 import React, { useEffect, useState } from "react";
 import { Icons } from "../constants";
 import { useSQLiteContext } from "expo-sqlite";
-import { FetchedMasterExercise, generateUUID } from "@/database/database";
+import { Exercise, MasterExercise } from "@/utils/types";
+import { generateUUID } from "@/database/setup";
+import { fetchMasterExercise, searchMasterExercise } from "@/database/fetch";
 
-type SubmitProps = {
-  _id: string;
-  master_id?: string;
-  name: string;
-  tags: string;
-}
+type Submission = Pick<Exercise, "_id" | "master_id" | "name" | "tags">
 
 interface ExerciseBrowserProps {
-  handleSubmit: (exercise: SubmitProps) => void;
+  handleSubmit: (exercise: Submission) => void;
   containerStyles?: string;
 }
 
-const ExerciseBrowser = ({ handleSubmit, containerStyles }: ExerciseBrowserProps) => {
+const ExerciseBrowser = ({
+  handleSubmit,
+  containerStyles,
+}: ExerciseBrowserProps) => {
   const db = useSQLiteContext();
   const [searchQuery, setSearchQuery] = useState<string>("");
-  const [searchResults, setSearchResults] = useState<FetchedMasterExercise[]>([]);
+  const [searchResults, setSearchResults] = useState<MasterExercise[]>([]);
   const [focused, setFocused] = useState<boolean>(false);
 
   useEffect(() => {
-    async function fetchExercises() {
-      const result: FetchedMasterExercise[] = await db.getAllAsync(
-        "SELECT * FROM MasterExercise WHERE name LIKE ?",
-        `%${searchQuery}%`
-      );
-      setSearchResults(result.slice(0, 5));
+    async function performSearch() {
+      const results = await searchMasterExercise(db, searchQuery);
+      setSearchResults(results);
     }
-    fetchExercises();
+    performSearch();
   }, [searchQuery]);
 
   const processSelection = async (exerciseName: string, masterId?: string) => {
-    const trimmedName = exerciseName.trim();
-    if (trimmedName.length === 0) {
+    if (exerciseName.trim().length === 0) {
       Alert.alert(
         "Invalid Exercise",
         "Please enter a valid name for your custom exercise"
       );
-      return;
-    }
+    } else {
+      handleSubmit({
+        _id: generateUUID(),
+        master_id: masterId ?? null,
+        name: exerciseName,
+        tags: masterId ? (await fetchMasterExercise(db, masterId)).muscles : [],
+      });
 
-    let exerciseMuscles = "";
-    if (masterId) {
-      const fetchMasterMuscles = await db.getFirstAsync<{ muscles: string }>(
-        "SELECT muscles FROM MasterExercise WHERE _id = ?", 
-        masterId
-      );
-      exerciseMuscles = fetchMasterMuscles?.muscles || "";
+      setSearchQuery("");
+      setFocused(false);
+      Keyboard.dismiss;
     }
-
-    handleSubmit({
-      _id: generateUUID(),
-      master_id: masterId,  // empty if custom
-      name: exerciseName,
-      tags: exerciseMuscles // empty if custom
-    });
-    setSearchQuery("");
-    setFocused(false);
-    Keyboard.dismiss;
   };
 
   return (

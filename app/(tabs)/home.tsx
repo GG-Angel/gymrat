@@ -1,9 +1,7 @@
-import { View, Text, Image, FlatList, TouchableOpacity } from "react-native";
+import { View, Text, FlatList, TouchableOpacity } from "react-native";
 import React, {
   useCallback,
   useEffect,
-  useState,
-  memo,
   createContext,
   useRef,
   useReducer,
@@ -14,17 +12,17 @@ import React, {
 } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import { Icons, Images } from "../../constants";
+import { Icons } from "../../constants";
 
-import Divider from "../../components/Divider";
 import CardContainer from "../../components/CardContainer";
 import EmptyState from "../../components/EmptyState";
 import { router } from "expo-router";
 import { SQLiteDatabase, useSQLiteContext } from "expo-sqlite";
-import { formatDays, formatTags, splitField } from "../../utils/format";
 import { useFocusEffect } from "@react-navigation/native";
-import { FetchedWorkout } from "@/database/database";
-import { calculateWeightPotential } from "@/utils/calculations";
+import { Workout } from "@/utils/types";
+import { fetchAllWorkouts } from "@/database/fetch";
+
+type OmittedWorkout = Omit<Workout, "exerciseIds">;
 
 interface HomeContextValues {
   state: HomeState;
@@ -32,22 +30,15 @@ interface HomeContextValues {
 }
 
 interface HomeState {
-  workouts: FormattedWorkout[];
+  workouts: OmittedWorkout[];
   unselectedFilters: string[];
   selectedFilters: string[];
-}
-
-interface FormattedWorkout {
-  _id: string;
-  name: string;
-  days: string;
-  tags: string[];
 }
 
 type ReducerAction =
   | {
       type: "SET_WORKOUTS";
-      workouts: FormattedWorkout[];
+      workouts: OmittedWorkout[];
     }
   | {
       type: "TOGGLE_FILTER";
@@ -130,7 +121,7 @@ const HomeProvider: React.FC<PropsWithChildren> = ({ children }) => {
     "Upper Chest",
   ]);
   const [state, dispatch] = useReducer(homeReducer, {
-    workouts: [] as FormattedWorkout[],
+    workouts: [] as OmittedWorkout[],
     unselectedFilters: [] as string[],
     selectedFilters: [] as string[],
   });
@@ -138,23 +129,14 @@ const HomeProvider: React.FC<PropsWithChildren> = ({ children }) => {
   // refetches the workouts when loading the home screen
   useFocusEffect(
     useCallback(() => {
-      async function fetchWorkouts() {
-        const fetchedWorkouts: FetchedWorkout[] = await db.getAllAsync(
-          "SELECT * FROM Workout;"
-        );
-        const formattedWorkouts: FormattedWorkout[] = fetchedWorkouts.map(
-          (workout) => ({
-            _id: workout._id,
-            name: workout.name,
-            days: formatDays(workout.days),
-            tags: splitField(workout.tags),
-          })
-        );
+      async function fetchWorkouts(): Promise<void> {
+        const workouts: OmittedWorkout[] = await fetchAllWorkouts(db);
         dispatch({
           type: "SET_WORKOUTS",
-          workouts: formattedWorkouts,
-        });
+          workouts: workouts
+        })
       }
+
       fetchWorkouts();
     }, [])
   );
@@ -200,13 +182,9 @@ const FilterBar: React.FC = () => {
         renderItem={({ item: filter }) => (
           <TouchableOpacity
             className="bg-white px-3 py-1 rounded-xl mr-1"
-            onPress={() =>
-              dispatch({ type: "TOGGLE_FILTER", filter: filter })
-            }
+            onPress={() => dispatch({ type: "TOGGLE_FILTER", filter: filter })}
           >
-            <Text className="text-gray font-gregular text-cbody">
-              {filter}
-            </Text>
+            <Text className="text-gray font-gregular text-cbody">{filter}</Text>
           </TouchableOpacity>
         )}
         horizontal
@@ -244,7 +222,7 @@ const FilterBar: React.FC = () => {
   );
 };
 
-const WorkoutCard: React.FC<{ workout: FormattedWorkout }> = ({ workout }) => {
+const WorkoutCard: React.FC<{ workout: OmittedWorkout }> = ({ workout }) => {
   const { state } = useContext(HomeContext);
   return (
     <TouchableOpacity
@@ -297,7 +275,7 @@ const HomePage = () => {
       <View className="mt-2">
         <Text className="text-secondary font-gbold text-ch1">Home</Text>
       </View>
-      { state.workouts.length > 0 && (
+      {state.workouts.length > 0 && (
         <>
           <View className="mt-6">
             <Text className="text-gray font-gregular text-csub mb-3">
@@ -329,11 +307,11 @@ const HomePage = () => {
         }}
         data={state.workouts}
         keyExtractor={(item) => item._id}
-        renderItem={({ item: workout }) => <WorkoutCard workout={workout} /> }
+        renderItem={({ item: workout }) => <WorkoutCard workout={workout} />}
         ItemSeparatorComponent={() => <View className="h-[12px]"></View>}
         ListEmptyComponent={() => (
           <View className="flex-1 justify-center items-center">
-            <EmptyState 
+            <EmptyState
               Image={Icons.empty}
               headerText="No Workouts Found"
               subheadText="Create a new workout to start tracking your progress"
