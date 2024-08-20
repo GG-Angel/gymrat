@@ -46,12 +46,7 @@ type ReducerAction =
     }
   | {
       type: "ADD_EXERCISE";
-      exercise: {
-        _id: string;
-        master_id?: string;
-        name: string;
-        tags: string[];
-      };
+      exercise: Pick<Exercise, "_id" | "master_id" | "name" | "tags">
     }
   | {
       type: "EDIT_EXERCISE";

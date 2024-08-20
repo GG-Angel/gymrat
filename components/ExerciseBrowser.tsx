@@ -11,16 +11,11 @@ import {
 import React, { useEffect, useState } from "react";
 import { Icons } from "../constants";
 import { useSQLiteContext } from "expo-sqlite";
-import { MasterExercise } from "@/utils/types";
+import { Exercise, MasterExercise } from "@/utils/types";
 import { generateUUID } from "@/database/setup";
 import { fetchMasterExercise, searchMasterExercise } from "@/database/fetch";
 
-type Submission = {
-  _id: string;
-  master_id?: string;
-  name: string;
-  tags: string[];
-};
+type Submission = Pick<Exercise, "_id" | "master_id" | "name" | "tags">
 
 interface ExerciseBrowserProps {
   handleSubmit: (exercise: Submission) => void;
@@ -53,9 +48,9 @@ const ExerciseBrowser = ({
     } else {
       handleSubmit({
         _id: generateUUID(),
-        master_id: masterId, // empty if custom
+        master_id: masterId ?? null,
         name: exerciseName,
-        tags: masterId ? (await fetchMasterExercise(db, masterId)).muscles : [], // empty if custom
+        tags: masterId ? (await fetchMasterExercise(db, masterId)).muscles : [],
       });
 
       setSearchQuery("");
