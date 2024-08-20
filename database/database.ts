@@ -5,108 +5,16 @@ import {
   parseWhole,
   splitField,
 } from "@/utils/format";
+import {
+  Routine,
+  Workout,
+  Exercise,
+  MasterExercise,
+  ExerciseSet,
+  SetType,
+} from "@/utils/types";
 import { SQLiteDatabase } from "expo-sqlite";
 import uuid from "react-native-uuid";
-
-export type EditableRoutine = {
-  workout: EditableWorkout;
-  exercises: {
-    [exerciseId: string]: EditableExercise;
-  };
-  sets: {
-    [setId: string]: EditableSet;
-  };
-};
-
-export type EditableWorkout = {
-  _id: string;
-  name: string;
-  days: string[];
-  exerciseIds: string[];
-};
-
-export type EditableExercise = {
-  _id: string;
-  master_id: string | null;
-  name: string;
-  rest: string;
-  notes: string;
-  tags: string;
-  setIds: string[];
-};
-
-export type EditableSet = {
-  _id: string;
-  type: "Standard" | "Warm-up" | "Drop" | "Failure";
-  weight: string | null;
-  reps: string | null;
-};
-
-export type ViewableRoutine = {
-  workout: ViewableWorkout;
-  exercises: {
-    [exerciseId: string]: ViewableExercise;
-  };
-  sets: {
-    [setId: string]: ViewableSet;
-  };
-};
-
-export type ViewableWorkout = {
-  _id: string;
-  name: string;
-  days: string[];
-  tags: string[];
-  exerciseIds: string[];
-};
-
-export type ViewableExercise = {
-  _id: string;
-  master_id: string | null;
-  name: string;
-  rest: number;
-  notes: string;
-  tags: string[];
-  setIds: string[];
-};
-
-export type ViewableSet = {
-  _id: string;
-  type: "Standard" | "Warm-up" | "Drop" | "Failure";
-  weight: number | null;
-  reps: number | null;
-};
-
-export type FetchedWorkout = {
-  _id: string;
-  name: string;
-  days: string;
-  tags: string;
-};
-
-export type FetchedMasterExercise = {
-  _id: string;
-  name: string;
-  muscles: string;
-};
-
-type FetchedExercise = {
-  _id: string;
-  workout_id: string;
-  master_id: string | null;
-  name: string;
-  rest: number;
-  notes: string;
-  tags: string;
-};
-
-type FetchedExerciseSet = {
-  _id: string;
-  exercise_id: string;
-  type: "Standard" | "Warm-up" | "Drop" | "Failure";
-  weight: number | null;
-  reps: number | null;
-};
 
 /**
  * Sets up the required tables for the local database to function,
@@ -175,27 +83,27 @@ export const setupDatabase = async (db: SQLiteDatabase) => {
 };
 
 /**
- * Gets a specified workout routine from the database and 
+ * Gets a specified workout routine from the database and
  * returns it in a viewable object format.
  * @param db The database.
  * @param workoutId The id of the workout we want to get.
  * @returns An object representation of the routine with displayable values.
  */
-export const getViewableRoutine = async (
+export const getRoutine = async (
   db: SQLiteDatabase,
   workoutId: string
-): Promise<ViewableRoutine> => {
-  const workout: FetchedWorkout = (await db.getFirstAsync(
+): Promise<Routine> => {
+  const workout: Workout = (await db.getFirstAsync(
     "SELECT * FROM Workout WHERE _id = ?",
     workoutId
   ))!;
-  const exercises: FetchedExercise[] = await db.getAllAsync(
+  const exercises: Exercise[] = await db.getAllAsync(
     "SELECT * FROM Exercise WHERE workout_id = ?",
     workoutId
   );
   const exerciseIds: string[] = exercises.map((e) => e._id);
 
-  const fullWorkout: ViewableRoutine = {
+  const fullWorkout: Routine = {
     workout: {
       _id: workout._id,
       name: workout.name,
@@ -209,7 +117,7 @@ export const getViewableRoutine = async (
 
   await Promise.all(
     exercises.map(async (exercise) => {
-      const sets: FetchedExerciseSet[] = await db.getAllAsync(
+      const sets: ExerciseSet[] = await db.getAllAsync(
         "SELECT * FROM ExerciseSet WHERE exercise_id = ?",
         exercise._id
       );
@@ -336,7 +244,7 @@ export const updateRoutine = async (
 };
 
 /**
- * Updates the workout portion of a full workout routine in the database, 
+ * Updates the workout portion of a full workout routine in the database,
  * such as name, days, and tags.
  * @param db The database.
  * @param workout The workout portion of the routine.

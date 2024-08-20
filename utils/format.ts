@@ -4,7 +4,9 @@ interface TagsResult {
   tags: string;
 }
 
-export const splitField = (field: string): string[] => {
+export const splitField = (field: string | null): string[] => {
+  if (!field) return [];
+  
   return field.split(SPLITTER);
 };
 

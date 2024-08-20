@@ -19,7 +19,7 @@ import { Icons } from "../../constants";
 import Divider from "../../components/Divider";
 import CardContainer from "../../components/CardContainer";
 import {
-  getViewableRoutine,
+  getRoutine,
   ViewableRoutine,
   ViewableExercise,
   ViewableSet,
@@ -45,7 +45,7 @@ const ViewWorkoutProvider: React.FC<PropsWithChildren> = ({ children }) => {
 
   useEffect(() => {
     const getFullWorkout = async () => {
-      const workout: ViewableRoutine = await getViewableRoutine(
+      const workout: ViewableRoutine = await getRoutine(
         db,
         params._id as string
       );
