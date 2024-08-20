@@ -45,8 +45,7 @@ const ExerciseBrowser = ({
   }, [searchQuery]);
 
   const processSelection = async (exerciseName: string, masterId?: string) => {
-    const trimmedName = exerciseName.trim();
-    if (trimmedName.length === 0) {
+    if (exerciseName.trim().length === 0) {
       Alert.alert(
         "Invalid Exercise",
         "Please enter a valid name for your custom exercise"
