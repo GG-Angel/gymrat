@@ -15,7 +15,11 @@ import {
 } from "@/utils/types";
 import { SQLiteDatabase } from "expo-sqlite";
 import uuid from "react-native-uuid";
-import { fetchExercisesFromWorkout, fetchSetsFromExercise, fetchWorkout } from "./fetch";
+import {
+  fetchExercisesFromWorkout,
+  fetchSetsFromExercise,
+  fetchWorkout,
+} from "./fetch";
 
 /**
  * Sets up the required tables for the local database to function,
@@ -94,30 +98,29 @@ export const getRoutine = async (
   db: SQLiteDatabase,
   workoutId: string
 ): Promise<Routine> => {
-
   const workout = await fetchWorkout(db, workoutId);
   const exercises = await fetchExercisesFromWorkout(db, workoutId);
-  const exerciseIds = exercises.map(exercise => exercise._id);
+  const exerciseIds = exercises.map((exercise) => exercise._id);
 
   const routine: Routine = {
     workout: {
       ...workout,
-      exerciseIds: exerciseIds
+      exerciseIds: exerciseIds,
     },
     exercises: {},
-    sets: {}
-  }
+    sets: {},
+  };
 
   for (const exercise of exercises) {
     const sets = await fetchSetsFromExercise(db, exercise._id);
-    const setIds = sets.map(s => s._id);
+    const setIds = sets.map((s) => s._id);
 
     routine.exercises[exercise._id] = {
       ...exercise,
-      setIds: setIds
-    }
+      setIds: setIds,
+    };
 
-    sets.forEach(set => routine.sets[set._id] = set)
+    sets.forEach((set) => (routine.sets[set._id] = set));
   }
 
   return routine;
@@ -126,67 +129,62 @@ export const getRoutine = async (
 /**
  * Saves a completely new workout routine to the database.
  * @param db The database.
- * @param newRoutine The workout routine we want to save.
+ * @param routine The workout routine we want to save.
  */
-export const saveNewRoutine = async (
+export const insertRoutine = async (
   db: SQLiteDatabase,
-  newRoutine: Routine
+  routine: Routine
 ): Promise<void> => {
-  const { workout, exercises, sets } = newRoutine;
+  const { workout, exercises, sets } = routine;
 
   // aggregate overall muscles worked for a workout
-  let allTags: Set<string> = new Set();
-  workout.exerciseIds.forEach((exerciseId) => {
-    const exercise = exercises[exerciseId];
-    const exerciseTags = splitField(exercise.tags);
-    for (const tag of exerciseTags) {
-      allTags.add(tag);
-    }
-  });
+  const allTags = new Set(
+    workout.exerciseIds.flatMap((exerciseId) => exercises[exerciseId].tags)
+  );
 
   // insert workout
   await db.runAsync(
-    `INSERT INTO Workout (_id, name, days, tags) VALUES (?, ?, ?, ?);`,
+    "INSERT INTO Workout (_id, name, days, tags) VALUES (?, ?, ?, ?);",
     workout._id,
-    workout.name.trim(),
+    workout.name,
     joinField(workout.days),
     joinField([...allTags])
   );
 
   // insert exercises
-  workout.exerciseIds.forEach(async (exerciseId) => {
+  for (const exerciseId of workout.exerciseIds) {
     const exercise = exercises[exerciseId];
 
     // insert an exercise
     await db.runAsync(
-      `INSERT INTO Exercise (_id, workout_id, name, rest, notes, tags) VALUES (?, ?, ?, ?, ?, ?);`,
-      exerciseId,
+      "INSERT INTO Exercise (_id, workout_id, name, rest, notes, tags) VALUES (?, ?, ?, ?, ?, ?);",
+      exercise._id,
       workout._id,
-      exercise.name.trim(),
-      parseWhole(exercise.rest),
+      exercise.name,
+      exercise.rest,
       exercise.notes,
-      exercise.tags
+      joinField(exercise.tags)
     );
 
-    // insert the sets for this exercise
-    exercise.setIds.forEach(async (setId) => {
+    // insert sets from this exercise
+    for (const setId of exercise.setIds) {
       const set = sets[setId];
 
-      // insert a set from this exercise
+      // insert set
       await db.runAsync(
-        `INSERT INTO ExerciseSet (_id, exercise_id, type, weight, reps) VALUES (?, ?, ?, ?, ?);`,
-        setId,
-        exerciseId,
+        "INSERT INTO ExerciseSet (_id, exercise_id, type, weight, reps) VALUES (?, ?, ?, ?, ?);",
+        set._id,
+        exercise._id,
         set.type,
         set.weight ? parseDecimal(set.weight) : null,
         set.reps ? parseWhole(set.reps) : null
       );
-    });
-  });
+    }
+  }
 
   console.log(
-    "Saved new workout into database:",
-    JSON.stringify(newRoutine, null, 2)
+    "Saved new routine into database:",
+    JSON.stringify(routine, null, 2)
   );
 };
 
@@ -674,5 +672,5 @@ const setupDummyData = async (db: SQLiteDatabase): Promise<void> => {
     },
   };
 
-  await saveNewRoutine(db, dummyWorkout);
+  await insertRoutine(db, dummyWorkout);
 };

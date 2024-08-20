@@ -29,7 +29,7 @@ import {
   EditableRoutine,
   EditableSet,
   generateUUID,
-  saveNewRoutine,
+  insertRoutine,
 } from "@/database/database";
 import { useSQLiteContext } from "expo-sqlite";
 import { splitField } from "@/utils/format";
@@ -594,7 +594,7 @@ const Editor = () => {
     } else if (form.workout.exerciseIds.length === 0) {
       Alert.alert("Invalid Details", "You must have at least one exercise");
     } else {
-      await saveNewRoutine(db, form);
+      await insertRoutine(db, form);
       Alert.alert("Workout Saved!");
       router.back();
     }
