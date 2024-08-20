@@ -1,5 +1,5 @@
 /**
- * Contains methods that only handle fetching elements from the database
+ * Contains methods that handle fetching elements from the database
  * and returning their normalized versions to be used in the application.
  */
 
@@ -8,6 +8,7 @@ import {
   Exercise,
   ExerciseSet,
   MasterExercise,
+  Routine,
   SetType,
   Workout,
 } from "@/utils/types";
@@ -45,6 +46,45 @@ type FetchedMasterExercise = {
 };
 
 /**
+ * Gets a specified workout routine from the database and
+ * returns it in a viewable object format.
+ * @param db The database.
+ * @param workoutId The id of the workout we want to get.
+ * @returns An object representation of the routine with displayable values.
+ */
+export const fetchRoutine = async (
+  db: SQLiteDatabase,
+  workoutId: string
+): Promise<Routine> => {
+  const workout = await fetchWorkout(db, workoutId);
+  const exercises = await fetchExercisesFromWorkout(db, workoutId);
+  const exerciseIds = exercises.map((exercise) => exercise._id);
+
+  const routine: Routine = {
+    workout: {
+      ...workout,
+      exerciseIds: exerciseIds,
+    },
+    exercises: {},
+    sets: {},
+  };
+
+  for (const exercise of exercises) {
+    const sets = await fetchSetsFromExercise(db, exercise._id);
+    const setIds = sets.map((s) => s._id);
+
+    routine.exercises[exercise._id] = {
+      ...exercise,
+      setIds: setIds,
+    };
+
+    sets.forEach((set) => (routine.sets[set._id] = set));
+  }
+
+  return routine;
+};
+
+/**
  * Fetches a workout from the database.
  * @param db The database.
  * @param workoutId The id of the workout we want to get.
@@ -67,7 +107,7 @@ export async function fetchWorkout(
 
   return {
     ...workout,
-    exerciseIds: exercises.map(e => e._id),
+    exerciseIds: exercises.map((e) => e._id),
     days: splitField(workout.days),
     tags: splitField(workout.tags),
   };
@@ -92,11 +132,14 @@ export async function fetchExercise(
     throw new Error(`Could not find an Exercise with an ID of ${exerciseId}.`);
   }
 
-  const sets: ExerciseSet[] = await fetchSetsFromExercise(db, exercise.workout_id);
+  const sets: ExerciseSet[] = await fetchSetsFromExercise(
+    db,
+    exercise.workout_id
+  );
 
   return {
     ...exercise,
-    setIds: sets.map(s => s._id),
+    setIds: sets.map((s) => s._id),
     tags: splitField(exercise.tags),
   };
 }
@@ -127,7 +170,7 @@ export async function fetchExercisesFromWorkout(
       const sets: ExerciseSet[] = await fetchSetsFromExercise(db, exercise._id); // use exercise._id for fetching sets
       return {
         ...exercise,
-        setIds: sets.map(s => s._id),
+        setIds: sets.map((s) => s._id),
         tags: splitField(exercise.tags),
       };
     })

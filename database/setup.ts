@@ -1,25 +1,15 @@
-import {
-  formatDays,
-  joinField,
-  parseDecimal,
-  parseWhole,
-  splitField,
-} from "@/utils/format";
-import {
-  Routine,
-  Workout,
-  Exercise,
-  MasterExercise,
-  ExerciseSet,
-  SetType,
-} from "@/utils/types";
+import { Routine } from "@/utils/types";
 import { SQLiteDatabase } from "expo-sqlite";
 import uuid from "react-native-uuid";
-import {
-  fetchExercisesFromWorkout,
-  fetchSetsFromExercise,
-  fetchWorkout,
-} from "./fetch";
+import { insertRoutine } from "./insert";
+
+/**
+ * Generates a unique UUID to identify specific rows in the database.
+ * @returns A unique string UUID.
+ */
+export const generateUUID = (): string => {
+  return String(uuid.v4());
+};
 
 /**
  * Sets up the required tables for the local database to function,
@@ -85,139 +75,6 @@ export const setupDatabase = async (db: SQLiteDatabase) => {
   await setupDummyData(db);
 
   console.log("Database Started!");
-};
-
-/**
- * Gets a specified workout routine from the database and
- * returns it in a viewable object format.
- * @param db The database.
- * @param workoutId The id of the workout we want to get.
- * @returns An object representation of the routine with displayable values.
- */
-export const getRoutine = async (
-  db: SQLiteDatabase,
-  workoutId: string
-): Promise<Routine> => {
-  const workout = await fetchWorkout(db, workoutId);
-  const exercises = await fetchExercisesFromWorkout(db, workoutId);
-  const exerciseIds = exercises.map((exercise) => exercise._id);
-
-  const routine: Routine = {
-    workout: {
-      ...workout,
-      exerciseIds: exerciseIds,
-    },
-    exercises: {},
-    sets: {},
-  };
-
-  for (const exercise of exercises) {
-    const sets = await fetchSetsFromExercise(db, exercise._id);
-    const setIds = sets.map((s) => s._id);
-
-    routine.exercises[exercise._id] = {
-      ...exercise,
-      setIds: setIds,
-    };
-
-    sets.forEach((set) => (routine.sets[set._id] = set));
-  }
-
-  return routine;
-};
-
-/**
- * Updates a full workout routine in the database; used when finishing a workout.
- * @param db The database.
- * @param routine The workout routine we want to update.
- */
-export const updateRoutine = async (
-  db: SQLiteDatabase,
-  routine: Routine
-): Promise<void> => {
-  const { workout, exercises, sets } = routine;
-
-  // update the workout portion
-  updateWorkout(db, workout);
-
-  // update each exercise
-  workout.exerciseIds.forEach((exerciseId) => {
-    const exercise = exercises[exerciseId];
-    updateExercise(db, exercise);
-
-    // update each set from each exercise
-    exercise.setIds.forEach((setId) => {
-      const set = sets[setId];
-      updateSet(db, set);
-    });
-  });
-};
-
-/**
- * Updates the workout portion of a full workout routine in the database,
- * such as name, days, and tags.
- * @param db The database.
- * @param workout The workout portion of the routine.
- */
-const updateWorkout = async (
-  db: SQLiteDatabase,
-  workout: ViewableWorkout
-): Promise<void> => {
-  const { _id, name, days } = workout;
-
-  await db.runAsync(
-    "UPDATE Workout SET name = ?, days = ? WHERE _id = ?",
-    name,
-    joinField(days),
-    _id
-  );
-};
-
-/**
- * Updates a specific exercise in the database.
- * @param db The database.
- * @param exercise The exercise we want to update.
- */
-const updateExercise = async (
-  db: SQLiteDatabase,
-  exercise: ViewableExercise
-): Promise<void> => {
-  const { _id, rest, notes } = exercise;
-
-  await db.runAsync(
-    "UPDATE Exercise SET rest = ?, notes = ? WHERE _id = ?",
-    rest,
-    notes,
-    _id
-  );
-};
-
-/**
- * Updates a specific exercise set in the database.
- * @param db The database.
- * @param set The set we want to update.
- */
-const updateSet = async (
-  db: SQLiteDatabase,
-  set: ViewableSet
-): Promise<void> => {
-  const { _id, type, weight, reps } = set;
-
-  await db.runAsync(
-    "UPDATE ExerciseSet SET type = ?, weight = ?, reps = ? WHERE _id = ?",
-    type,
-    weight,
-    reps,
-    _id
-  );
-};
-
-/**
- * Generates a unique UUID to identify specific rows in the database.
- * @returns A unique string UUID.
- */
-export const generateUUID = (): string => {
-  return String(uuid.v4());
 };
 
 /**
@@ -542,70 +399,79 @@ const setupDummyData = async (db: SQLiteDatabase): Promise<void> => {
     generateUUID(),
   ] as string[];
 
-  const dummyWorkout: EditableRoutine = {
+  const dummyWorkout: Routine = {
     workout: {
       _id: workoutId,
       name: "My Personal Workout",
       days: ["Monday", "Thursday"],
       exerciseIds: [exerciseIds[0], exerciseIds[1]],
+      tags: ["Chest", "Triceps", "Shoulders"],
     },
     exercises: {
       [exerciseIds[0]]: {
         _id: exerciseIds[0],
+        workout_id: workoutId,
         master_id: masterIdChest,
-        name: "Machine Chest Press",
-        rest: "90",
-        notes: "Seat level 8, Thumbs on tips of handles",
-        tags: "Chest, Triceps, Shoulders",
         setIds: [setIds[0], setIds[1], setIds[2]],
+        name: "Machine Chest Press",
+        rest: 90,
+        notes: "Seat level 8, Thumbs on tips of handles",
+        tags: ["Chest", "Triceps", "Shoulders"],
       },
       [exerciseIds[1]]: {
         _id: exerciseIds[1],
+        workout_id: workoutId,
         master_id: masterIdShoulders,
+        setIds: [setIds[3], setIds[4], setIds[5]],
         name: "Overhead Press",
-        rest: "60",
+        rest: 60,
         notes:
           "Seat level 4, Keep back flat on seat, Move down until elbows are 90 degrees",
-        tags: "Shoulders, Triceps",
-        setIds: [setIds[3], setIds[4], setIds[5]],
+        tags: ["Shoulders", "Triceps"],
       },
     },
     sets: {
       [setIds[0]]: {
         _id: setIds[0],
+        exercise_id: exerciseIds[0],
         type: "Warm-up",
-        weight: "90",
-        reps: "15",
+        weight: 90,
+        reps: 15,
       },
       [setIds[1]]: {
         _id: setIds[1],
+        exercise_id: exerciseIds[0],
         type: "Standard",
         weight: null,
-        reps: "10",
+        reps: 10,
       },
       [setIds[2]]: {
         _id: setIds[2],
+        exercise_id: exerciseIds[0],
         type: "Failure",
-        weight: "135",
-        reps: "10",
+        weight: 135,
+        reps: 10,
       },
       [setIds[3]]: {
         _id: setIds[3],
+        exercise_id: exerciseIds[1],
         type: "Warm-up",
-        weight: "90",
-        reps: "10",
+        weight: 90,
+        reps: 10,
       },
       [setIds[4]]: {
         _id: setIds[4],
+        exercise_id: exerciseIds[1],
         type: "Standard",
-        weight: "110",
-        reps: "8",
+        weight: 110,
+        reps: 8,
       },
       [setIds[5]]: {
         _id: setIds[5],
+        exercise_id: exerciseIds[1],
         type: "Drop",
-        weight: "110",
-        reps: "14",
+        weight: 110,
+        reps: 14,
       },
     },
   };

@@ -1,3 +1,8 @@
+/**
+ * Contains methods that handle inserting items into
+ * the database, such as when creating a new workout routine.
+ */
+
 import { joinField, parseDecimal, parseWhole } from "@/utils/format";
 import { Routine } from "@/utils/types";
 import { SQLiteDatabase } from "expo-sqlite";
