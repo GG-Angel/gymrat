@@ -225,6 +225,20 @@ export async function fetchMasterExercise(
 }
 
 /**
+ * Searches for a maximum of five master exercises according to the search query given by the user.
+ * @param db The database.
+ * @param query The user's search query.
+ * @returns An array of related master exercises, or an empty array if nothing is found.
+ */
+export async function searchMasterExercise(db: SQLiteDatabase, query: string): Promise<MasterExercise[]> {
+  const results: FetchedMasterExercise[] = await db.getAllAsync(
+    "SELECT * FROM MasterExercise WHERE name LIKE ? LIMIT 5",
+    query
+  );
+  return results.map(result => ({ ...result, muscles: splitField(result.muscles) }));
+}
+
+/**
  * Fetches an exercise set from the database.
  * @param db The database.
  * @param setId The id of the exercise set we want to get.

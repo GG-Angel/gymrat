@@ -7,12 +7,13 @@ import {
   ScrollView,
   Keyboard,
   Alert,
-  ListRenderItemInfo,
 } from "react-native";
 import React, { useEffect, useState } from "react";
 import { Icons } from "../constants";
 import { useSQLiteContext } from "expo-sqlite";
-import { MasterExercise, generateUUID } from "@/database/database";
+import { MasterExercise } from "@/utils/types";
+import { generateUUID } from "@/database/setup";
+import { searchMasterExercise } from "@/database/fetch";
 
 type SubmitProps = {
   _id: string;
@@ -36,14 +37,11 @@ const ExerciseBrowser = ({
   const [focused, setFocused] = useState<boolean>(false);
 
   useEffect(() => {
-    async function fetchExercises() {
-      const result: MasterExercise[] = await db.getAllAsync(
-        "SELECT * FROM MasterExercise WHERE name LIKE ?",
-        `%${searchQuery}%`
-      );
-      setSearchResults(result.slice(0, 5));
+    async function performSearch() {
+      const results = await searchMasterExercise(db, searchQuery);
+      setSearchResults(results);
     }
-    fetchExercises();
+    performSearch();
   }, [searchQuery]);
 
   const processSelection = async (exerciseName: string, masterId?: string) => {
