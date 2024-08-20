@@ -10,6 +10,7 @@ export type Routine = {
 
 export type Workout = {
   _id: string;
+  exerciseIds: string[];
   name: string;
   days: string[];
   tags: string[];
@@ -25,6 +26,7 @@ export type Exercise = {
   _id: string;
   workout_id: string;
   master_id: string | null;
+  setIds: string[];
   name: string;
   rest: number;
   notes: string;

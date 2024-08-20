@@ -50,7 +50,7 @@ type FetchedMasterExercise = {
  * @param workoutId The id of the workout we want to get.
  * @returns The normalized workout.
  */
-async function fetchWorkout(
+export async function fetchWorkout(
   db: SQLiteDatabase,
   workoutId: string
 ): Promise<Workout> {
@@ -76,7 +76,7 @@ async function fetchWorkout(
  * @param exerciseId The id of the exercise we want to get.
  * @returns The normalized exercise.
  */
-async function fetchExercise(
+export async function fetchExercise(
   db: SQLiteDatabase,
   exerciseId: string
 ): Promise<Exercise> {
@@ -95,13 +95,34 @@ async function fetchExercise(
   };
 }
 
+export async function fetchExercisesFromWorkout(
+  db: SQLiteDatabase,
+  workoutId: string
+): Promise<Exercise[]> {
+  const exercises: FetchedExercise[] | null = await db.getAllAsync(
+    "SELECT * FROM Exercise WHERE workout_id = ?",
+    workoutId
+  );
+
+  if (!exercises) {
+    throw new Error(
+      `Could not find Exercises from a Workout with an ID of ${workoutId}.`
+    );
+  }
+
+  return exercises.map((exercise) => ({
+    ...exercise,
+    tags: splitField(exercise.tags),
+  }));
+}
+
 /**
  * Fetches a master exercise from the database.
  * @param db The database.
- * @param masterExerciseId The id of the master exercise we want to get. 
+ * @param masterExerciseId The id of the master exercise we want to get.
  * @returns The normalized master exercise.
- */ 
-async function fetchMasterExercise(
+ */
+export async function fetchMasterExercise(
   db: SQLiteDatabase,
   masterExerciseId: string
 ): Promise<MasterExercise> {
@@ -128,7 +149,7 @@ async function fetchMasterExercise(
  * @param setId The id of the exercise set we want to get.
  * @returns The normalized exercise set.
  */
-async function fetchSet(
+export async function fetchSet(
   db: SQLiteDatabase,
   setId: string
 ): Promise<ExerciseSet> {
@@ -142,4 +163,28 @@ async function fetchSet(
   }
 
   return set;
+}
+
+/**
+ * Fetches all sets related to a particular exercise.
+ * @param db The database.
+ * @param exerciseId The id of the exercise that has the sets we want to get.
+ * @returns An array of normalized sets related to the exercise.
+ */
+export async function fetchSetsFromExercise(
+  db: SQLiteDatabase,
+  exerciseId: string
+): Promise<ExerciseSet[]> {
+  const sets: FetchedSet[] | null = await db.getAllAsync(
+    "SELECT * FROM ExerciseSet WHERE exercise_id = ?",
+    exerciseId
+  );
+
+  if (!sets) {
+    throw new Error(
+      `Could not find Sets from an Exercise with an ID of ${exerciseId}.`
+    );
+  }
+
+  return sets;
 }

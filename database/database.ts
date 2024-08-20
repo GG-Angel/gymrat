@@ -15,6 +15,7 @@ import {
 } from "@/utils/types";
 import { SQLiteDatabase } from "expo-sqlite";
 import uuid from "react-native-uuid";
+import { fetchExercisesFromWorkout, fetchSetsFromExercise, fetchWorkout } from "./fetch";
 
 /**
  * Sets up the required tables for the local database to function,
@@ -79,7 +80,7 @@ export const setupDatabase = async (db: SQLiteDatabase) => {
   // setup dummy data
   await setupDummyData(db);
 
-  console.log("Database Started");
+  console.log("Database Started!");
 };
 
 /**
@@ -93,60 +94,33 @@ export const getRoutine = async (
   db: SQLiteDatabase,
   workoutId: string
 ): Promise<Routine> => {
-  const workout: Workout = (await db.getFirstAsync(
-    "SELECT * FROM Workout WHERE _id = ?",
-    workoutId
-  ))!;
-  const exercises: Exercise[] = await db.getAllAsync(
-    "SELECT * FROM Exercise WHERE workout_id = ?",
-    workoutId
-  );
-  const exerciseIds: string[] = exercises.map((e) => e._id);
 
-  const fullWorkout: Routine = {
+  const workout = await fetchWorkout(db, workoutId);
+  const exercises = await fetchExercisesFromWorkout(db, workoutId);
+  const exerciseIds = exercises.map(exercise => exercise._id);
+
+  const routine: Routine = {
     workout: {
-      _id: workout._id,
-      name: workout.name,
-      days: splitField(workout.days),
-      tags: splitField(workout.tags),
-      exerciseIds: exerciseIds,
+      ...workout,
+      exerciseIds: exerciseIds
     },
     exercises: {},
-    sets: {},
-  };
+    sets: {}
+  }
 
-  await Promise.all(
-    exercises.map(async (exercise) => {
-      const sets: ExerciseSet[] = await db.getAllAsync(
-        "SELECT * FROM ExerciseSet WHERE exercise_id = ?",
-        exercise._id
-      );
-      const setIds: string[] = sets.map((s) => s._id);
+  for (const exercise of exercises) {
+    const sets = await fetchSetsFromExercise(db, exercise._id);
+    const setIds = sets.map(s => s._id);
 
-      fullWorkout.exercises[exercise._id] = {
-        _id: exercise._id,
-        master_id: exercise.master_id,
-        name: exercise.name,
-        rest: exercise.rest,
-        notes: exercise.notes,
-        tags: splitField(exercise.tags),
-        setIds: setIds,
-      };
+    routine.exercises[exercise._id] = {
+      ...exercise,
+      setIds: setIds
+    }
 
-      sets.forEach((set) => {
-        fullWorkout.sets[set._id] = {
-          _id: set._id,
-          type: set.type,
-          weight: set.weight,
-          reps: set.reps,
-        };
-      });
-    })
-  );
+    sets.forEach(set => routine.sets[set._id] = set)
+  }
 
-  // console.log("Fetched full workout from database:", JSON.stringify(fullWorkout, null, 2));
-
-  return fullWorkout;
+  return routine;
 };
 
 /**
@@ -156,7 +130,7 @@ export const getRoutine = async (
  */
 export const saveNewRoutine = async (
   db: SQLiteDatabase,
-  newRoutine: EditableRoutine
+  newRoutine: Routine
 ): Promise<void> => {
   const { workout, exercises, sets } = newRoutine;
 
