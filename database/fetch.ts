@@ -114,6 +114,24 @@ export async function fetchWorkout(
 }
 
 /**
+ * Fetches all available workouts from the database 
+ * without their associated exercises for fast lookup.
+ * @param db The database.
+ * @returns An array of all available workouts.
+ */
+export async function fetchAllWorkouts(db: SQLiteDatabase): Promise<Omit<Workout, "exerciseIds">[]> {
+  const workouts: FetchedWorkout[] = await db.getAllAsync("SELECT * FROM Workout") ?? [];
+
+  return workouts.map((workout) => ({
+    _id: workout._id,
+    name: workout.name,
+    days: splitField(workout.days),
+    tags: splitField(workout.tags),
+  }));
+}
+
+
+/**
  * Fetches an exercise from the database.
  * @param db The database.
  * @param exerciseId The id of the exercise we want to get.

@@ -23,8 +23,8 @@ import { router } from "expo-router";
 import { SQLiteDatabase, useSQLiteContext } from "expo-sqlite";
 import { formatDays, formatTags, splitField } from "../../utils/format";
 import { useFocusEffect } from "@react-navigation/native";
-import { Workout } from "@/database/database";
 import { calculateWeightPotential } from "@/utils/calculations";
+import { Workout } from "@/utils/types";
 
 interface HomeContextValues {
   state: HomeState;
@@ -138,23 +138,28 @@ const HomeProvider: React.FC<PropsWithChildren> = ({ children }) => {
   // refetches the workouts when loading the home screen
   useFocusEffect(
     useCallback(() => {
-      async function fetchWorkouts() {
-        const fetchedWorkouts: Workout[] = await db.getAllAsync(
-          "SELECT * FROM Workout;"
-        );
-        const formattedWorkouts: FormattedWorkout[] = fetchedWorkouts.map(
-          (workout) => ({
-            _id: workout._id,
-            name: workout.name,
-            days: formatDays(workout.days),
-            tags: splitField(workout.tags),
-          })
-        );
-        dispatch({
-          type: "SET_WORKOUTS",
-          workouts: formattedWorkouts,
-        });
+      // async function fetchWorkouts() {
+      //   const fetchedWorkouts: Workout[] = await db.getAllAsync(
+      //     "SELECT * FROM Workout;"
+      //   );
+      //   const formattedWorkouts: FormattedWorkout[] = fetchedWorkouts.map(
+      //     (workout) => ({
+      //       _id: workout._id,
+      //       name: workout.name,
+      //       days: formatDays(workout.days),
+      //       tags: splitField(workout.tags),
+      //     })
+      //   );
+      //   dispatch({
+      //     type: "SET_WORKOUTS",
+      //     workouts: formattedWorkouts,
+      //   });
+      // }
+
+      async function fetchWorkouts(): Promise<void> {
+        const workouts: Workout[] = 
       }
+
       fetchWorkouts();
     }, [])
   );
