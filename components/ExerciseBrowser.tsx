@@ -13,17 +13,17 @@ import { Icons } from "../constants";
 import { useSQLiteContext } from "expo-sqlite";
 import { MasterExercise } from "@/utils/types";
 import { generateUUID } from "@/database/setup";
-import { searchMasterExercise } from "@/database/fetch";
+import { fetchMasterExercise, searchMasterExercise } from "@/database/fetch";
 
-type SubmitProps = {
+type Submission = {
   _id: string;
   master_id?: string;
   name: string;
-  tags: string;
+  tags: string[];
 };
 
 interface ExerciseBrowserProps {
-  handleSubmit: (exercise: SubmitProps) => void;
+  handleSubmit: (exercise: Submission) => void;
   containerStyles?: string;
 }
 
@@ -50,27 +50,18 @@ const ExerciseBrowser = ({
         "Invalid Exercise",
         "Please enter a valid name for your custom exercise"
       );
-      return;
-    }
+    } else {
+      handleSubmit({
+        _id: generateUUID(),
+        master_id: masterId, // empty if custom
+        name: exerciseName,
+        tags: masterId ? (await fetchMasterExercise(db, masterId)).muscles : [], // empty if custom
+      });
 
-    let exerciseMuscles = "";
-    if (masterId) {
-      const fetchMasterMuscles = await db.getFirstAsync<{ muscles: string }>(
-        "SELECT muscles FROM MasterExercise WHERE _id = ?",
-        masterId
-      );
-      exerciseMuscles = fetchMasterMuscles?.muscles || "";
+      setSearchQuery("");
+      setFocused(false);
+      Keyboard.dismiss;
     }
-
-    handleSubmit({
-      _id: generateUUID(),
-      master_id: masterId, // empty if custom
-      name: exerciseName,
-      tags: exerciseMuscles, // empty if custom
-    });
-    setSearchQuery("");
-    setFocused(false);
-    Keyboard.dismiss;
   };
 
   return (
