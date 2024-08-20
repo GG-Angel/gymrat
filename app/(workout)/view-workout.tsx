@@ -3,7 +3,6 @@ import {
   Text,
   TouchableOpacity,
   FlatList,
-  ListRenderItemInfo,
 } from "react-native";
 import React, {
   createContext,
