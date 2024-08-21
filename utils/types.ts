@@ -16,6 +16,8 @@ export type Workout = {
   tags: string[];
 };
 
+export type OmittedWorkout = Omit<Workout, "exerciseIds">;
+
 export type MasterExercise = {
   _id: string;
   name: string;
@@ -49,5 +51,19 @@ export type DayOfWeek =
   | "Thursday"
   | "Friday"
   | "Saturday";
+
+export type MonthOfYear =   
+  | "January"
+  | "February"
+  | "March"
+  | "April"
+  | "May"
+  | "June"
+  | "July"
+  | "August"
+  | "September"
+  | "October"
+  | "November"
+  | "December"
 
 export type SetType = "Standard" | "Warm-up" | "Drop" | "Failure";

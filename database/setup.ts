@@ -2,6 +2,7 @@ import { Routine } from "@/utils/types";
 import { SQLiteDatabase } from "expo-sqlite";
 import uuid from "react-native-uuid";
 import { insertRoutine } from "./insert";
+import { getCurrentDay } from "@/utils/dates";
 
 /**
  * Generates a unique UUID to identify specific rows in the database.
@@ -403,7 +404,7 @@ const setupDummyData = async (db: SQLiteDatabase): Promise<void> => {
     workout: {
       _id: workoutId,
       name: "My Personal Workout",
-      days: ["Monday", "Thursday"],
+      days: [getCurrentDay()],
       exerciseIds: [exerciseIds[0], exerciseIds[1]],
       tags: ["Chest", "Triceps", "Shoulders"],
     },
