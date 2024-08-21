@@ -6,6 +6,7 @@ import {
   Platform,
   Vibration,
   FlatList,
+  Animated,
 } from "react-native";
 import React, {
   createContext,
@@ -264,22 +265,28 @@ const WorkoutProvider: React.FC<PropsWithChildren> = ({ children }) => {
 
 const ProgressBar = () => {
   const { state } = useContext(WorkoutContext);
-  const [progress, setProgress] = useState<number>(0);
+  const progress = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    setProgress(state.elapsedSets / state.workoutLength);
+    const newProgress = state.elapsedSets / state.workoutLength;
+    Animated.timing(progress, {
+      toValue: newProgress,
+      duration: 250,
+      useNativeDriver: false,
+    }).start();
   }, [state.elapsedSets]);
 
   return (
-    <View className="flex-row items-center">
-      <View
-        className={`bg-primary h-1.5 rounded-md ${progress < 1 && "rounded-r-none"}`}
-        style={{ flex: progress }}
-      ></View>
-      <View
-        className={`bg-gray-200 h-1.5 rounded-md ${progress > 0 && "rounded-l-none"}`}
-        style={{ flex: 1 - progress }}
-      ></View>
+    <View className="w-full h-1.5 bg-gray-200 rounded-[3px] overflow-hidden">
+      <Animated.View
+        className="bg-primary h-full"
+        style={{
+          width: progress.interpolate({
+            inputRange: [0, 1],
+            outputRange: ['0%', '100%'],
+          }),
+        }}
+      />
     </View>
   );
 };
