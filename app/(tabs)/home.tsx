@@ -21,6 +21,7 @@ import { SQLiteDatabase, useSQLiteContext } from "expo-sqlite";
 import { useFocusEffect } from "@react-navigation/native";
 import { Workout } from "@/utils/types";
 import { fetchAllWorkouts } from "@/database/fetch";
+import { formatDays } from "@/utils/format";
 
 type OmittedWorkout = Omit<Workout, "exerciseIds">;
 
@@ -236,7 +237,7 @@ const WorkoutCard: React.FC<{ workout: OmittedWorkout }> = ({ workout }) => {
       <CardContainer containerStyles="flex-row justify-between items-center">
         <View className="flex-1">
           <Text className="text-gray font-gregular text-cbody">
-            {workout.days}
+            {formatDays(workout.days)}
           </Text>
           <Text className="text-secondary font-gsemibold text-csub mt-1">
             {workout.name}

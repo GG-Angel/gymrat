@@ -1,4 +1,4 @@
-import { parseDecimal, parseWhole } from "./format";
+import { parseWhole } from "./format";
 
 const PERCENTAGE_OF_1RM = [
   0, 1.0, 0.97, 0.94, 0.92, 0.89, 0.86, 0.83, 0.81, 0.78, 0.75, 0.73, 0.71, 0.7,
@@ -6,6 +6,13 @@ const PERCENTAGE_OF_1RM = [
   0.53, 0.52, 0.51, 0.5,
 ];
 
+/**
+ * Calculates the potential one rep max for an exercise 
+ * given the current weight and reps performed.
+ * @param weight The current weight performed.
+ * @param reps The current reps performed.
+ * @returns The weight potential for a one rep max.
+ */
 function calculateOneRepMax(weight: number, reps: number): number {
   if (weight < 0 || reps < 0) {
     throw new Error(
@@ -18,6 +25,14 @@ function calculateOneRepMax(weight: number, reps: number): number {
   return weight / percentageOfOneRepMax;
 }
 
+/**
+ * Calculates the potential weight for reps ranging from 1-30 
+ * based on the current weight and reps performed.
+ * @param weight The current weight performed.
+ * @param reps The current reps performed.
+ * @returns An array of objects containing the potential weight for a given number of reps, 
+ *          along with its percentage from the one rep max.
+ */
 export function calculateWeightPotential(
   weight: number,
   reps: number
