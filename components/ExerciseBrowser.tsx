@@ -90,12 +90,12 @@ const ExerciseBrowser = ({
           data={searchResults}
           keyboardShouldPersistTaps="always"
           keyExtractor={(exercise) => exercise._id}
-          //@ts-ignore
           renderItem={({ item: exercise, index }) => (
             <TouchableOpacity
               className={`flex-row space-x-2 items-center justify-between bg-white ${
                 index === 4 && "rounded-b-lg"
               }`}
+              hitSlop={10}
               onPress={() => processSelection(exercise.name, exercise._id)}
             >
               <Icons.dumbbell width={14} height={14} />
