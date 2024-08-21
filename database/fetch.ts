@@ -9,6 +9,7 @@ import {
   Exercise,
   ExerciseSet,
   MasterExercise,
+  OmittedWorkout,
   Routine,
   SetType,
   Workout,
@@ -120,7 +121,7 @@ export async function fetchWorkout(
  * @param db The database.
  * @returns An array of all workouts for today, or an empty array if none are scheduled for today.
  */
-export async function fetchTodaysWorkouts(db: SQLiteDatabase): Promise<Omit<Workout, "exerciseIds">[]> {
+export async function fetchTodaysWorkouts(db: SQLiteDatabase): Promise<OmittedWorkout[]> {
   const today = getCurrentDay();
   const workouts: FetchedWorkout[] = await db.getAllAsync(
     "SELECT * FROM Workout WHERE days LIKE ?",
@@ -141,7 +142,7 @@ export async function fetchTodaysWorkouts(db: SQLiteDatabase): Promise<Omit<Work
  * @param db The database.
  * @returns An array of all available workouts.
  */
-export async function fetchAllWorkouts(db: SQLiteDatabase): Promise<Omit<Workout, "exerciseIds">[]> {
+export async function fetchAllWorkouts(db: SQLiteDatabase): Promise<OmittedWorkout[]> {
   const workouts: FetchedWorkout[] = await db.getAllAsync("SELECT * FROM Workout") ?? [];
 
   return workouts.map((workout) => ({

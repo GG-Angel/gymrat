@@ -19,11 +19,9 @@ import EmptyState from "../../components/EmptyState";
 import { router } from "expo-router";
 import { SQLiteDatabase, useSQLiteContext } from "expo-sqlite";
 import { useFocusEffect } from "@react-navigation/native";
-import { Workout } from "@/utils/types";
+import { OmittedWorkout, Workout } from "@/utils/types";
 import { fetchAllWorkouts } from "@/database/fetch";
 import { formatDays } from "@/utils/format";
-
-type OmittedWorkout = Omit<Workout, "exerciseIds">;
 
 interface HomeContextValues {
   state: HomeState;

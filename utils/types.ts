@@ -16,6 +16,8 @@ export type Workout = {
   tags: string[];
 };
 
+export type OmittedWorkout = Omit<Workout, "exerciseIds">;
+
 export type MasterExercise = {
   _id: string;
   name: string;
