@@ -3,6 +3,7 @@
  * and returning their normalized versions to be used in the application.
  */
 
+import { getCurrentDay } from "@/utils/dates";
 import { splitField } from "@/utils/format";
 import {
   Exercise,
@@ -111,6 +112,27 @@ export async function fetchWorkout(
     days: splitField(workout.days),
     tags: splitField(workout.tags),
   };
+}
+
+/**
+ * Fetches all workouts that are scheduled for the current day
+ * without their associated exercises for fast lookup.
+ * @param db The database.
+ * @returns An array of all workouts for today, or an empty array if none are scheduled for today.
+ */
+export async function fetchTodaysWorkouts(db: SQLiteDatabase): Promise<Omit<Workout, "exerciseIds">[]> {
+  const today = getCurrentDay();
+  const workouts: FetchedWorkout[] = await db.getAllAsync(
+    "SELECT * FROM Workout WHERE days LIKE ?",
+    `%${today}%`
+  ) ?? [];
+
+  return workouts.map((workout) => ({
+    _id: workout._id,
+    name: workout.name,
+    days: splitField(workout.days),
+    tags: splitField(workout.tags),
+  }));
 }
 
 /**
