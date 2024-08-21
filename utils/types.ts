@@ -50,4 +50,18 @@ export type DayOfWeek =
   | "Friday"
   | "Saturday";
 
+export type MonthOfYear =   
+  | "January"
+  | "February"
+  | "March"
+  | "April"
+  | "May"
+  | "June"
+  | "July"
+  | "August"
+  | "September"
+  | "October"
+  | "November"
+  | "December"
+
 export type SetType = "Standard" | "Warm-up" | "Drop" | "Failure";
