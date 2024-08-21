@@ -9,6 +9,7 @@ import React, {
   useContext,
   Dispatch,
   PropsWithChildren,
+  useState,
 } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -20,8 +21,9 @@ import { router } from "expo-router";
 import { SQLiteDatabase, useSQLiteContext } from "expo-sqlite";
 import { useFocusEffect } from "@react-navigation/native";
 import { OmittedWorkout, Workout } from "@/utils/types";
-import { fetchAllWorkouts } from "@/database/fetch";
+import { fetchAllWorkouts, fetchTodaysWorkouts } from "@/database/fetch";
 import { formatDays } from "@/utils/format";
+import { getCurrentDay } from "@/utils/dates";
 
 interface HomeContextValues {
   state: HomeState;
@@ -29,7 +31,8 @@ interface HomeContextValues {
 }
 
 interface HomeState {
-  workouts: OmittedWorkout[];
+  allWorkouts: OmittedWorkout[];
+  todaysWorkouts: OmittedWorkout[];
   unselectedFilters: string[];
   selectedFilters: string[];
 }
@@ -37,7 +40,8 @@ interface HomeState {
 type ReducerAction =
   | {
       type: "SET_WORKOUTS";
-      workouts: OmittedWorkout[];
+      allWorkouts: OmittedWorkout[];
+      todaysWorkouts: OmittedWorkout[];
     }
   | {
       type: "TOGGLE_FILTER";
@@ -58,7 +62,8 @@ function homeReducer(state: HomeState, action: ReducerAction) {
     case "SET_WORKOUTS":
       return {
         ...state,
-        workouts: action.workouts,
+        allWorkouts: action.allWorkouts,
+        todaysWorkouts: action.todaysWorkouts
       };
     case "TOGGLE_FILTER":
       return {
@@ -120,19 +125,23 @@ const HomeProvider: React.FC<PropsWithChildren> = ({ children }) => {
     "Upper Chest",
   ]);
   const [state, dispatch] = useReducer(homeReducer, {
-    workouts: [] as OmittedWorkout[],
-    unselectedFilters: [] as string[],
-    selectedFilters: [] as string[],
+    allWorkouts: [],
+    todaysWorkouts: [],
+    unselectedFilters: [],
+    selectedFilters: [],
   });
 
   // refetches the workouts when loading the home screen
   useFocusEffect(
     useCallback(() => {
       async function fetchWorkouts(): Promise<void> {
-        const workouts: OmittedWorkout[] = await fetchAllWorkouts(db);
+        const allWorkouts = await fetchAllWorkouts(db);
+        const todaysWorkouts = await fetchTodaysWorkouts(db);
+
         dispatch({
           type: "SET_WORKOUTS",
-          workouts: workouts
+          allWorkouts: allWorkouts,
+          todaysWorkouts: todaysWorkouts
         })
       }
 
@@ -155,21 +164,25 @@ const HomeProvider: React.FC<PropsWithChildren> = ({ children }) => {
   );
 };
 
-// const TodaysWorkout = ({ workout }) => {
-//   return (
-//     <CardContainer>
+const TodaysWorkout: React.FC<{ workout: OmittedWorkout }> = ({ workout }) => {
+  return (
+    <CardContainer>
+      <Text>
+        {workout.name}
+      </Text>
+    </CardContainer>
+  )
+}
 
-//     </CardContainer>
-//   )
-// }
-
-// const RecommendedWorkouts = () => {
-//   return (
-//     <>
-//       <TodaysWorkout />
-//     </>
-//   )
-// }
+const RecommendedWorkouts: React.FC = () => {
+  const { state } = useContext(HomeContext);
+  
+  return (
+    <>
+      <TodaysWorkout workout={state.todaysWorkouts[0]} />
+    </>
+  )
+}
 
 const FilterBar: React.FC = () => {
   const { state, dispatch } = useContext(HomeContext);
@@ -274,13 +287,13 @@ const HomePage = () => {
       <View className="mt-2">
         <Text className="text-secondary font-gbold text-ch1">Home</Text>
       </View>
-      {state.workouts.length > 0 && (
+      {state.allWorkouts.length > 0 && (
         <>
           <View className="mt-6">
             <Text className="text-gray font-gregular text-csub mb-3">
               Recommended Workouts
             </Text>
-            {/* <RecommendedWorkouts /> */}
+            <RecommendedWorkouts />
           </View>
           <View className="mt-6">
             <View className="flex-row justify-between items-center">
@@ -304,7 +317,7 @@ const HomePage = () => {
           paddingBottom: 72,
           flexGrow: 1,
         }}
-        data={state.workouts}
+        data={state.allWorkouts}
         keyExtractor={(item) => item._id}
         renderItem={({ item: workout }) => <WorkoutCard workout={workout} />}
         ItemSeparatorComponent={() => <View className="h-[12px]"></View>}
