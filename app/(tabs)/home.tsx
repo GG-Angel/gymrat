@@ -1,4 +1,11 @@
-import { View, Text, FlatList, TouchableOpacity } from "react-native";
+import {
+  View,
+  Text,
+  FlatList,
+  TouchableOpacity,
+  Dimensions,
+  ViewToken,
+} from "react-native";
 import React, {
   useCallback,
   useEffect,
@@ -63,7 +70,7 @@ function homeReducer(state: HomeState, action: ReducerAction) {
       return {
         ...state,
         allWorkouts: action.allWorkouts,
-        todaysWorkouts: action.todaysWorkouts
+        todaysWorkouts: action.todaysWorkouts,
       };
     case "TOGGLE_FILTER":
       return {
@@ -141,8 +148,8 @@ const HomeProvider: React.FC<PropsWithChildren> = ({ children }) => {
         dispatch({
           type: "SET_WORKOUTS",
           allWorkouts: allWorkouts,
-          todaysWorkouts: todaysWorkouts
-        })
+          todaysWorkouts: todaysWorkouts,
+        });
       }
 
       fetchWorkouts();
@@ -165,24 +172,97 @@ const HomeProvider: React.FC<PropsWithChildren> = ({ children }) => {
 };
 
 const TodaysWorkout: React.FC<{ workout: OmittedWorkout }> = ({ workout }) => {
+  const handlePress = () => {
+    router.push({
+      pathname: "/view-workout",
+      params: { ...workout },
+    });
+  };
+
   return (
-    <CardContainer>
-      <Text>
-        {workout.name}
-      </Text>
-    </CardContainer>
-  )
-}
+    <TouchableOpacity onPress={handlePress}>
+      <CardContainer containerStyles="flex-row justify-between items-end space-x-6">
+        <View className="flex-1">
+          <Text className="text-gray font-gregular text-csub">
+            Today's Workout
+          </Text>
+          <Text className="text-secondary font-gbold text-ch2 mt-1">
+            {workout.name}
+          </Text>
+          <View className="flex-row flex-wrap mt-3 mb-[-4px]">
+            {workout.tags.map((tag, index) => (
+              <View
+                key={index}
+                className="bg-white-100 py-1 px-2.5 rounded-xl mr-1 mb-1"
+              >
+                <Text className="text-gray font-gregular text-ctri">{tag}</Text>
+              </View>
+            ))}
+          </View>
+        </View>
+        <TouchableOpacity onPress={handlePress}>
+          <Icons.forwardCircle />
+        </TouchableOpacity>
+      </CardContainer>
+    </TouchableOpacity>
+  );
+};
 
 const RecommendedWorkouts: React.FC = () => {
   const { state } = useContext(HomeContext);
-  
+  const [parentWidth, setParentWidth] = useState<number>(0);
+  const [currentItem, setCurrentItem] = useState<number>(0);
+
+  const onVisibleItemsChanged = ({
+    viewableItems,
+  }: {
+    viewableItems: ViewToken<OmittedWorkout>[];
+  }) => {
+    setCurrentItem(viewableItems[0].index ?? 0);
+  };
+
+  const PaginationDots: React.FC<{ count: number }> = ({ count }) =>
+    Array.from({ length: count }).map((_item, index) => (
+      <View
+        key={`PAGE_DOT_${index}`}
+        className={`${index === currentItem ? "bg-secondary" : "bg-gray-100"} w-1.5 h-1.5 rounded-[3px] mr-1`}
+      ></View>
+    ));
+
   return (
-    <>
-      <TodaysWorkout workout={state.todaysWorkouts[0]} />
-    </>
-  )
-}
+    <View
+      onLayout={(event) => {
+        const { width } = event.nativeEvent.layout;
+        setParentWidth(width);
+      }}
+    >
+      <FlatList
+        data={state.todaysWorkouts}
+        keyExtractor={(workout) => workout._id}
+        renderItem={({ item: workout }) => (
+          <View style={{ width: parentWidth }}>
+            <TodaysWorkout workout={workout} />
+          </View>
+        )}
+        ItemSeparatorComponent={() => <View className="w-4"></View>}
+        scrollEnabled={state.todaysWorkouts.length > 1}
+        showsHorizontalScrollIndicator={false}
+        horizontal
+        bounces={false}
+        snapToInterval={parentWidth + 16}
+        decelerationRate="fast"
+        onViewableItemsChanged={onVisibleItemsChanged}
+      />
+      {state.todaysWorkouts.length > 1 && (
+        <View className="items-center mt-3 mr-[-4px]">
+          <View className="flex-row space-x-4">
+            <PaginationDots count={state.todaysWorkouts.length} />
+          </View>
+        </View>
+      )}
+    </View>
+  );
+};
 
 const FilterBar: React.FC = () => {
   const { state, dispatch } = useContext(HomeContext);
@@ -289,12 +369,14 @@ const HomePage = () => {
       </View>
       {state.allWorkouts.length > 0 && (
         <>
-          <View className="mt-6">
-            <Text className="text-gray font-gregular text-csub mb-3">
-              Recommended Workouts
-            </Text>
-            <RecommendedWorkouts />
-          </View>
+          {state.todaysWorkouts.length > 0 && (
+            <View className="mt-6">
+              <Text className="text-gray font-gregular text-csub mb-3">
+                Recommended Workouts
+              </Text>
+              <RecommendedWorkouts />
+            </View>
+          )}
           <View className="mt-6">
             <View className="flex-row justify-between items-center">
               <Text className="text-gray font-gregular text-csub mb-3">

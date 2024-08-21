@@ -24,14 +24,12 @@ const MONTHS: MonthOfYear[] = [
   "December",
 ];
 
-// current local time
-const now = new Date();
-
 /**
  * Gets the name of the current week day.
  * @returns The current week day.
  */
 export function getCurrentDay(): DayOfWeek {
+  const now = new Date();
   return DAYS[now.getDay()];
 }
 
@@ -40,5 +38,6 @@ export function getCurrentDay(): DayOfWeek {
  * @returns The current month.
  */
 export function getCurrentMonth(): MonthOfYear {
+  const now = new Date();
   return MONTHS[now.getMonth()];
 }
