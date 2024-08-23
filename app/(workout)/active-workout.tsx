@@ -540,25 +540,26 @@ const OneRepMaxCalculator: React.FC<{ containerStyles?: string }> = ({
           </View>
         )}
         ItemSeparatorComponent={() => <View className="h-1"></View>}
-        renderItem={({ item }) => (
+        renderItem={({ item: row }) => (
           <View className="flex-row space-x-2">
             <View className="flex-[0.24] bg-white-100 py-1 rounded-md">
               <Text className="text-gray font-gregular text-cbody text-center">
-                {item.percentage}%
+                {row.percentage}%
               </Text>
             </View>
             <View className="flex-[0.38] bg-white-100 py-1 rounded-md">
               <Text className="text-gray font-gregular text-cbody text-center">
-                {item.weight}
+                {row.weight}
               </Text>
             </View>
             <View className="flex-[0.38] bg-white-100 py-1 rounded-md">
               <Text className="text-gray font-gregular text-cbody text-center">
-                {item.reps}
+                {row.reps}
               </Text>
             </View>
           </View>
         )}
+        scrollEnabled={false}
       />
       <View>
         <Text className="text-gray-100 font-gregular text-ctri">
