@@ -372,7 +372,7 @@ const setupMasterTable = async (db: SQLiteDatabase): Promise<void> => {
     );
   }
 
-  console.log("Inserted master table into database");
+  // console.log("Inserted master table into database");
 };
 
 /**

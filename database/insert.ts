@@ -63,8 +63,8 @@ export const insertRoutine = async (
     }
   }
 
-  console.log(
-    "Saved new routine into database:",
-    JSON.stringify(routine, null, 2)
-  );
+  // console.log(
+  //   "Saved new routine into database:",
+  //   JSON.stringify(routine, null, 2)
+  // );
 };

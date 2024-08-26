@@ -4,6 +4,7 @@ import { useFonts } from "expo-font";
 import { SplashScreen, Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { setupDatabase } from "../database/setup";
+import GlobalProvider from "@/context/GlobalProvider";
 
 // displays a splash screen until fonts are loaded
 SplashScreen.preventAutoHideAsync();
@@ -36,7 +37,7 @@ const RootLayout = () => {
   }
 
   return (
-    <SQLiteProvider databaseName="gymrat-data.db" onInit={setupDatabase}>
+    <GlobalProvider>
       <Stack>
         <Stack.Screen name="index" options={{ headerShown: false }} />
         <Stack.Screen name="(auth)" options={{ headerShown: false }} />
@@ -45,7 +46,7 @@ const RootLayout = () => {
         <Stack.Screen name="(workout)" options={{ headerShown: false }} />
       </Stack>
       <StatusBar style="dark" />
-    </SQLiteProvider>
+    </GlobalProvider>
   );
 };
 
