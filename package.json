@@ -9,8 +9,7 @@
     "ios": "expo start --ios",
     "web": "expo start --web",
     "test": "jest --watchAll",
-    "lint": "expo lint",
-    "devStart": "nodemon server.js"
+    "lint": "expo lint"
   },
   "jest": {
     "preset": "jest-expo"
@@ -38,6 +37,7 @@
     "expo-system-ui": "~3.0.6",
     "expo-web-browser": "~13.0.3",
     "express": "^4.19.2",
+    "mongodb": "^6.8.0",
     "mongoose": "^8.5.3",
     "nativewind": "^2.0.11",
     "react": "18.2.0",
