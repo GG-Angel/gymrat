@@ -28,7 +28,7 @@ import { router } from "expo-router";
 import { SQLiteDatabase, useSQLiteContext } from "expo-sqlite";
 import { useFocusEffect } from "@react-navigation/native";
 import { OmittedWorkout, Workout } from "@/utils/types";
-import { fetchAllWorkouts, fetchTodaysWorkouts } from "@/database/fetch";
+import { fetchAllWorkouts, fetchTodaysWorkouts } from "@/database-old/fetch";
 import { formatDays } from "@/utils/format";
 import { getCurrentDay } from "@/utils/dates";
 

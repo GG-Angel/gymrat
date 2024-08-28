@@ -27,8 +27,8 @@ import { router } from "expo-router";
 import { useSQLiteContext } from "expo-sqlite";
 import { parseWhole, splitField } from "@/utils/format";
 import { DayOfWeek, Exercise, ExerciseSet, Routine } from "@/utils/types";
-import { generateUUID } from "@/database/setup";
-import { insertRoutine } from "@/database/insert";
+import { generateUUID } from "@/database-old/setup";
+import { insertRoutine } from "@/database-old/insert";
 import { parse } from "@babel/core";
 
 interface EditWorkoutContextValues {
@@ -47,7 +47,7 @@ type ReducerAction =
     }
   | {
       type: "ADD_EXERCISE";
-      exercise: Pick<Exercise, "_id" | "master_id" | "name" | "tags">
+      exercise: Pick<Exercise, "_id" | "master_id" | "name" | "tags">;
     }
   | {
       type: "EDIT_EXERCISE";
@@ -76,10 +76,7 @@ const WorkoutContext = createContext<EditWorkoutContextValues>(
   {} as EditWorkoutContextValues
 );
 
-function workoutReducer(
-  state: Routine,
-  action: ReducerAction
-): Routine {
+function workoutReducer(state: Routine, action: ReducerAction): Routine {
   switch (action.type) {
     case "CHANGE_NAME":
       return {
@@ -118,7 +115,7 @@ function workoutReducer(
             name: action.exercise.name,
             rest: 90,
             notes: "",
-            tags: action.exercise.tags
+            tags: action.exercise.tags,
           },
         },
         sets: {
@@ -227,10 +224,10 @@ const WorkoutProvider: React.FC<PropsWithChildren> = ({ children }) => {
       exerciseIds: [],
       name: "",
       days: [],
-      tags: []
+      tags: [],
     },
     exercises: {},
-    sets: {}
+    sets: {},
   });
 
   const contextValue: EditWorkoutContextValues = useMemo(

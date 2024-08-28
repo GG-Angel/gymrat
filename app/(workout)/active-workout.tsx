@@ -31,7 +31,7 @@ import { calculateWeightPotential } from "@/utils/calculations";
 import { BlurView } from "expo-blur";
 import { useSQLiteContext } from "expo-sqlite";
 import { Exercise, ExerciseSet, Routine, SetType } from "@/utils/types";
-import { updateRoutine } from "@/database/update";
+import { updateRoutine } from "@/database-old/update";
 
 interface IsOpenedState {
   calculator: boolean;
@@ -283,7 +283,7 @@ const ProgressBar = () => {
         style={{
           width: progress.interpolate({
             inputRange: [0, 1],
-            outputRange: ['0%', '100%'],
+            outputRange: ["0%", "100%"],
           }),
         }}
       />

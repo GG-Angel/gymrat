@@ -12,10 +12,13 @@ import React, { useEffect, useState } from "react";
 import { Icons } from "../constants";
 import { useSQLiteContext } from "expo-sqlite";
 import { Exercise, MasterExercise } from "@/utils/types";
-import { generateUUID } from "@/database/setup";
-import { fetchMasterExercise, searchMasterExercise } from "@/database/fetch";
+import { generateUUID } from "@/database-old/setup";
+import {
+  fetchMasterExercise,
+  searchMasterExercise,
+} from "@/database-old/fetch";
 
-type Submission = Pick<Exercise, "_id" | "master_id" | "name" | "tags">
+type Submission = Pick<Exercise, "_id" | "master_id" | "name" | "tags">;
 
 interface ExerciseBrowserProps {
   handleSubmit: (exercise: Submission) => void;

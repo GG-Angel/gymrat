@@ -1,9 +1,4 @@
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  FlatList,
-} from "react-native";
+import { View, Text, TouchableOpacity, FlatList } from "react-native";
 import React, {
   createContext,
   PropsWithChildren,
@@ -21,7 +16,7 @@ import { SQLiteDatabase, useSQLiteContext } from "expo-sqlite";
 import { formatTime } from "../../utils/format";
 import CustomButton from "../../components/CustomButton";
 import { Exercise, ExerciseSet, Routine } from "@/utils/types";
-import { fetchRoutine } from "@/database/fetch";
+import { fetchRoutine } from "@/database-old/fetch";
 
 interface ViewWorkoutContextValue {
   routine: Routine | null;
@@ -110,9 +105,7 @@ const ExerciseCardSet: React.FC<{ set: ExerciseSet; index: number }> = ({
   );
 };
 
-const ExerciseCard: React.FC<{ exercise: Exercise }> = ({
-  exercise,
-}) => {
+const ExerciseCard: React.FC<{ exercise: Exercise }> = ({ exercise }) => {
   const { routine } = useContext(ViewWorkoutContext);
   const [isExpanded, setIsExpanded] = useState(false);
 
@@ -194,9 +187,7 @@ const ViewWorkoutPage = () => {
           <TouchableOpacity onPress={() => router.back()}>
             <Icons.crumbtrail />
           </TouchableOpacity>
-          <Text className="text-secondary font-gbold text-ch1">
-            Workout
-          </Text>
+          <Text className="text-secondary font-gbold text-ch1">Workout</Text>
         </View>
         <TouchableOpacity onPress={() => {}}>
           <Icons.hamburger />

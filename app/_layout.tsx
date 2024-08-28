@@ -3,7 +3,7 @@ import React, { useEffect } from "react";
 import { useFonts } from "expo-font";
 import { SplashScreen, Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import { setupDatabase } from "../database/setup";
+import { setupDatabase } from "../database-old/setup";
 
 // displays a splash screen until fonts are loaded
 SplashScreen.preventAutoHideAsync();
